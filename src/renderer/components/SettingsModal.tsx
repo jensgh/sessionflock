@@ -14,6 +14,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
   const [theme, setTheme] = useState<ThemeSetting>('system')
   const [defaultAgent, setDefaultAgent] = useState('claude')
   const [gitWorktreeByDefault, setGitWorktreeByDefault] = useState(false)
+  const [askOnNewSession, setAskOnNewSession] = useState(false)
   const [needsInputIdleMs, setNeedsInputIdleMs] = useState(1500)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,6 +26,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
     setTheme(settings.theme)
     setDefaultAgent(settings.defaultAgent)
     setGitWorktreeByDefault(settings.gitWorktreeByDefault)
+    setAskOnNewSession(settings.askOnNewSession)
     setNeedsInputIdleMs(settings.needsInputIdleMs)
   }, [settings])
 
@@ -59,6 +61,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         theme,
         defaultAgent,
         gitWorktreeByDefault,
+        askOnNewSession,
         needsInputIdleMs: idle
       })
       onClose()
@@ -146,6 +149,22 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
             worktree (a clean checkout on a new branch) so parallel sessions don’t
             collide. Changes stay on their branch; worktrees aren’t removed
             automatically.
+          </span>
+        </label>
+
+        <label className="field">
+          <span className="field-label">
+            <input
+              type="checkbox"
+              checked={askOnNewSession}
+              onChange={(e) => setAskOnNewSession(e.target.checked)}
+            />{' '}
+            Ask on new session what I’m working on
+          </span>
+          <span className="field-hint">
+            Prompt for a short task name when starting a session; it names the tab
+            and (with worktree isolation on) the git branch. Off = start
+            immediately.
           </span>
         </label>
 

@@ -1,65 +1,40 @@
-// Generates square app/toolbar icons from the wide logo by cropping just the
-// bird mark (dropping the wordmark), keying the cream background to transparent,
-// and padding to a square. Re-run after the logo changes:
-//   node scripts/make-icons.mjs
+// Generates square app/toolbar icons from the wide logo by cropping the flock
+// mark (dropping the wordmark) and padding to a square with the logo's own
+// background. Re-run after the logo changes:  node scripts/make-icons.mjs
+// (Tune CROP if the artwork's composition changes.)
 import sharp from 'sharp'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 
 const SRC = 'assets/logo.png'
 
-// Region of the logo containing the bird mark (logo is 2816x1536; the wordmark
-// is the lower third, which we exclude). trim() then tightens to the mark.
-const CROP = { left: 760, top: 215, width: 1320, height: 680 }
-
-// Color distance from the sampled background treated as "background" → made
-// transparent. Higher = removes more (risk of eating light pixels of the mark).
-const THRESHOLD = 34
+// Region of the logo containing the flock mark (logo is 2816x1536; the wordmark
+// is in the lower portion and is excluded).
+const CROP = { left: 250, top: 110, width: 2320, height: 880 }
 
 const sizes = [
   { file: 'build/icon.png', size: 1024 }, // electron-builder source icon (packaged app)
-  { file: 'resources/icon.png', size: 512 }, // bundled icon for the BrowserWindow (dev + Linux taskbar)
+  { file: 'resources/icon.png', size: 512 }, // bundled BrowserWindow icon (dev + Linux taskbar)
   { file: 'assets/icon.png', size: 512 }, // README / general use
   { file: 'assets/icon-32.png', size: 32 } // small / toolbar size
 ]
 
 const run = async () => {
-  // Sample the logo background (top-left pixel).
+  // Sample the logo background (top-left) so the square padding is seamless.
   const corner = await sharp(SRC).extract({ left: 0, top: 0, width: 1, height: 1 }).raw().toBuffer()
-  const bg = { r: corner[0], g: corner[1], b: corner[2] }
+  const bg = { r: corner[0], g: corner[1], b: corner[2], alpha: 1 }
 
-  // Crop the bird mark and trim the cream margins around it.
-  const { data, info } = await sharp(SRC)
-    .extract(CROP)
-    .trim({ background: { ...bg, alpha: 1 }, threshold: 12 })
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true })
-
-  // Chroma-key: pixels near the cream background become fully transparent.
-  const t2 = THRESHOLD * THRESHOLD
-  for (let i = 0; i < data.length; i += 4) {
-    const dr = data[i] - bg.r
-    const dg = data[i + 1] - bg.g
-    const db = data[i + 2] - bg.b
-    if (dr * dr + dg * dg + db * db <= t2) data[i + 3] = 0
-  }
-
-  const keyed = await sharp(data, {
-    raw: { width: info.width, height: info.height, channels: 4 }
-  })
-    .png()
-    .toBuffer()
+  const mark = await sharp(SRC).extract(CROP).png().toBuffer()
 
   for (const { file, size } of sizes) {
     mkdirSync(dirname(file), { recursive: true })
-    await sharp(keyed)
-      .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    await sharp(mark)
+      .resize(size, size, { fit: 'contain', background: bg })
       .png()
       .toFile(file)
     console.log(`wrote ${file} (${size}x${size})`)
   }
-  console.log('keyed background:', bg, 'threshold', THRESHOLD)
+  console.log('background:', bg)
 }
 
 run().catch((e) => {

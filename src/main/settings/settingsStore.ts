@@ -43,6 +43,9 @@ function migrate(raw: unknown): AppSettings {
   if (typeof r.gitWorktreeByDefault === 'boolean') {
     out.gitWorktreeByDefault = r.gitWorktreeByDefault
   }
+  if (typeof r.askOnNewSession === 'boolean') {
+    out.askOnNewSession = r.askOnNewSession
+  }
   if (typeof r.claudePath === 'string' || r.claudePath === null) {
     out.claudePath = r.claudePath
   }

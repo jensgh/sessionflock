@@ -31,10 +31,11 @@ export function TopBar(): JSX.Element {
     }
   }
 
-  // Worktree on → ask for a task name first; otherwise start immediately.
+  // If "ask on new session" is on, prompt for a task name first (names the tab
+  // and, when worktree isolation is on, the branch). Otherwise start immediately.
   const startSession = (cwd: string): void => {
     if (!settings) return
-    if (settings.gitWorktreeByDefault) setPendingCwd(cwd)
+    if (settings.askOnNewSession) setPendingCwd(cwd)
     else void newSession(cwd)
   }
 

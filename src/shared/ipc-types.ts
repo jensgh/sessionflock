@@ -98,6 +98,8 @@ export interface AppSettings {
   defaultAgent: string
   /** When the session folder is a git repo, run it in a fresh git worktree. */
   gitWorktreeByDefault: boolean
+  /** Prompt for a task name when starting a session (names the tab + branch). */
+  askOnNewSession: boolean
   /** Explicit path to the `claude` binary; null = auto-detect. */
   claudePath: string | null
 }
@@ -111,6 +113,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'defaultHomeFolder'> = {
   needsInputIdleMs: 0,
   defaultAgent: 'claude',
   gitWorktreeByDefault: false,
+  askOnNewSession: false,
   claudePath: null
 }
 
