@@ -8,6 +8,7 @@ directories:
 # (incl. the native node-pty) is bundled automatically and unpacked from the asar.
 files:
   - out/**
+  - resources/**
   - package.json
   - '!**/*.map'
   - '!src/*'

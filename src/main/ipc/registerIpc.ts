@@ -3,7 +3,7 @@
 // (keystrokes via PTY_WRITE, and PTY_RESIZE which the preload sends, not
 // invokes — see preload/index.ts).
 
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, clipboard, ipcMain } from 'electron'
 import {
   IPC,
   type AppSettings,
@@ -55,4 +55,11 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
   ipcMain.handle(IPC.SESSIONS_SAVE, (_e, snapshot: SessionSnapshot) => {
     saveSnapshot(snapshot)
   })
+
+  // --- Clipboard (via Electron, reliable across platforms) -------------------
+  ipcMain.on(IPC.CLIPBOARD_WRITE, (_e, text: string) => {
+    if (typeof text === 'string' && text.length > 0) clipboard.writeText(text)
+  })
+
+  ipcMain.handle(IPC.CLIPBOARD_READ, (): string => clipboard.readText())
 }

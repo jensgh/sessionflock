@@ -63,7 +63,13 @@ const api: RendererApi = {
   loadSessions: (): Promise<SessionSnapshot> => ipcRenderer.invoke(IPC.SESSIONS_LOAD),
 
   saveSessions: (snapshot: SessionSnapshot): Promise<void> =>
-    ipcRenderer.invoke(IPC.SESSIONS_SAVE, snapshot)
+    ipcRenderer.invoke(IPC.SESSIONS_SAVE, snapshot),
+
+  writeClipboard: (text: string): void => {
+    ipcRenderer.send(IPC.CLIPBOARD_WRITE, text)
+  },
+
+  readClipboard: (): Promise<string> => ipcRenderer.invoke(IPC.CLIPBOARD_READ)
 }
 
 contextBridge.exposeInMainWorld('api', api)

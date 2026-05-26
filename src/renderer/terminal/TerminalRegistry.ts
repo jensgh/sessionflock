@@ -83,20 +83,19 @@ class Registry {
       if (isCopy) {
         const sel = term.getSelection()
         if (sel) {
-          void navigator.clipboard.writeText(sel).catch(() => undefined)
+          // Electron clipboard (via IPC) — reliable, unlike navigator.clipboard
+          // in a sandboxed renderer.
+          window.api.writeClipboard(sel)
           return false // handled — don't forward to the pty
         }
         return true // no selection: let the key through (Ctrl+C -> SIGINT)
       }
       if (isPaste) {
-        void navigator.clipboard
-          .readText()
-          .then((text) => {
-            // term.paste() applies bracketed-paste wrapping when the app enabled
-            // it, and routes through onData -> ptyWrite.
-            if (text) term.paste(text)
-          })
-          .catch(() => undefined)
+        // term.paste() applies bracketed-paste wrapping when the app enabled it,
+        // and routes through onData -> ptyWrite.
+        void window.api.readClipboard().then((text) => {
+          if (text) term.paste(text)
+        })
         return false
       }
       return true

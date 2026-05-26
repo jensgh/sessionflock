@@ -1,7 +1,8 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { SessionId } from '@shared/ipc-types'
 import { useSessionStore } from '../store/sessionStore'
 import { useTerminal } from '../terminal/useTerminal'
+import { TerminalRegistry } from '../terminal/TerminalRegistry'
 
 /**
  * Hosts the focused session's terminal. To keep background terminals LIVE
@@ -13,20 +14,72 @@ import { useTerminal } from '../terminal/useTerminal'
 export function TerminalPane(): JSX.Element {
   const order = useSessionStore((s) => s.order)
   const activeId = useSessionStore((s) => s.activeId)
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+
+  const closeMenu = (): void => setMenu(null)
+
+  const copySelection = (): void => {
+    closeMenu()
+    const sel = activeId ? TerminalRegistry.get(activeId)?.term.getSelection() : ''
+    if (sel) window.api.writeClipboard(sel)
+  }
+
+  const paste = (): void => {
+    closeMenu()
+    if (!activeId) return
+    void window.api.readClipboard().then((text) => {
+      if (text) TerminalRegistry.get(activeId)?.term.paste(text)
+    })
+  }
+
+  const hasSelection = !!(activeId && TerminalRegistry.get(activeId)?.term.hasSelection())
 
   return (
-    <section className="terminal-pane" aria-label="Terminal">
+    <section
+      className="terminal-pane"
+      aria-label="Terminal"
+      onContextMenu={(e) => {
+        if (order.length === 0) return
+        e.preventDefault()
+        setMenu({ x: e.clientX, y: e.clientY })
+      }}
+    >
       {order.length === 0 && (
         <div className="terminal-pane-empty">
           <p>No session selected.</p>
           <p className="terminal-pane-empty-hint">
-            Click <strong>＋ New Session</strong> to start a Claude session.
+            Click <strong>＋ New Session</strong> to start a session.
           </p>
         </div>
       )}
       {order.map((id) => (
         <SessionTerminal key={id} id={id} isActive={id === activeId} />
       ))}
+
+      {menu && (
+        <>
+          <div
+            className="context-menu-backdrop"
+            onMouseDown={closeMenu}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              closeMenu()
+            }}
+          />
+          <ul className="context-menu" style={{ left: menu.x, top: menu.y }} role="menu">
+            <li>
+              <button type="button" role="menuitem" disabled={!hasSelection} onClick={copySelection}>
+                Copy
+              </button>
+            </li>
+            <li>
+              <button type="button" role="menuitem" onClick={paste}>
+                Paste
+              </button>
+            </li>
+          </ul>
+        </>
+      )}
     </section>
   )
 }

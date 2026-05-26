@@ -8,6 +8,9 @@ import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 import { createPtyManager, type PtyManager } from './ptyManager.js'
 import { registerIpc } from './ipc/registerIpc.js'
+// App/window icon, bundled by electron-vite. Sets the dev window + Linux taskbar
+// icon; the packaged app's OS icon comes from electron-builder (build/icon.png).
+import appIcon from '../../resources/icon.png?asset'
 
 // ESM has no __dirname; derive it from import.meta.url.
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -35,6 +38,7 @@ function createWindow(): void {
     width: 1280,
     height: 800,
     show: false,
+    icon: appIcon,
     webPreferences: {
       // electron-vite emits the preload as ESM (.mjs) because package.json sets
       // "type": "module"; the file lives at out/preload/index.mjs relative to

@@ -4,6 +4,7 @@
 //   node scripts/make-icons.mjs
 import sharp from 'sharp'
 import { mkdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 
 const SRC = 'assets/logo.png'
 
@@ -16,9 +17,10 @@ const CROP = { left: 760, top: 215, width: 1320, height: 680 }
 const THRESHOLD = 34
 
 const sizes = [
-  { file: 'build/icon.png', size: 1024 }, // electron-builder source icon
-  { file: 'assets/icon.png', size: 512 },
-  { file: 'assets/icon-32.png', size: 32 } // toolbar size
+  { file: 'build/icon.png', size: 1024 }, // electron-builder source icon (packaged app)
+  { file: 'resources/icon.png', size: 512 }, // bundled icon for the BrowserWindow (dev + Linux taskbar)
+  { file: 'assets/icon.png', size: 512 }, // README / general use
+  { file: 'assets/icon-32.png', size: 32 } // small / toolbar size
 ]
 
 const run = async () => {
@@ -49,8 +51,8 @@ const run = async () => {
     .png()
     .toBuffer()
 
-  mkdirSync('build', { recursive: true })
   for (const { file, size } of sizes) {
+    mkdirSync(dirname(file), { recursive: true })
     await sharp(keyed)
       .resize(size, size, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()

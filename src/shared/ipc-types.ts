@@ -15,8 +15,10 @@ export const IPC = {
   DIALOG_PICK_FOLDER: 'dialog:pickFolder',
   SESSIONS_LOAD: 'sessions:load',
   SESSIONS_SAVE: 'sessions:save',
+  CLIPBOARD_READ: 'clipboard:read',
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
+  CLIPBOARD_WRITE: 'clipboard:write',
   // main -> renderer (webContents.send)
   PTY_DATA: 'pty:data',
   PTY_EXIT: 'pty:exit',
@@ -148,4 +150,8 @@ export interface RendererApi {
   pickFolder(defaultPath?: string): Promise<string | null>
   loadSessions(): Promise<SessionSnapshot>
   saveSessions(snapshot: SessionSnapshot): Promise<void>
+  /** Write text to the OS clipboard (via Electron's clipboard). */
+  writeClipboard(text: string): void
+  /** Read text from the OS clipboard. */
+  readClipboard(): Promise<string>
 }

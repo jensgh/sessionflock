@@ -386,3 +386,62 @@ body {
   margin: 0 0 8px;
   font-size: 12px;
 }
+
+/* New Session split button (main + folder-picker caret) */
+.new-session-group {
+  display: inline-flex;
+  align-items: stretch;
+}
+.new-session-group .new-session-btn {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.new-session-group .new-session-folder-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.25);
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Right-click context menu (Copy / Paste) over the terminal */
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.context-menu {
+  position: fixed;
+  z-index: 1001;
+  min-width: 140px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.context-menu li {
+  margin: 0;
+}
+.context-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+.context-menu button:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.context-menu button:disabled {
+  color: var(--fg-dim);
+  cursor: default;
+}
