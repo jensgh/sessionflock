@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { dirname } from 'node:path'
 import { createPtyManager, type PtyManager } from './ptyManager.js'
 import { registerIpc } from './ipc/registerIpc.js'
+import { initAutoUpdater } from './updater.js'
 // App/window icon, bundled by electron-vite. Sets the dev window + Linux taskbar
 // icon; the packaged app's OS icon comes from electron-builder (build/icon.png).
 import appIcon from '../../resources/icon.png?asset'
@@ -60,6 +61,9 @@ function createWindow(): void {
   registerIpc(win, ptyManager)
 
   win.once('ready-to-show', () => win.show())
+
+  // Check for updates (packaged builds only) shortly after launch.
+  initAutoUpdater(win)
 
   // Block in-app attempts to open new browser windows.
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
