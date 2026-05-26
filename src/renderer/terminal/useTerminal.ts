@@ -48,6 +48,8 @@ export interface CreateSessionInput {
   order?: number
   /** Whether to focus the new session after creation. */
   activate?: boolean
+  /** Task name → git worktree branch (when worktree isolation is on). */
+  branch?: string
   theme: 'system' | 'light' | 'dark'
 }
 
@@ -88,7 +90,7 @@ export async function createSession(input: CreateSessionInput): Promise<SessionI
   const { cols, rows } = readGrid(id)
 
   try {
-    const res = await window.api.ptyCreate({ id, cwd: input.cwd, cols, rows })
+    const res = await window.api.ptyCreate({ id, cwd: input.cwd, cols, rows, branch: input.branch })
     if (res.ok) {
       useSessionStore.getState().setStatus(id, 'running')
     } else {

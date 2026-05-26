@@ -32,6 +32,8 @@ export interface PtyCreateRequest {
   cwd: string
   cols: number
   rows: number
+  /** Optional task name; used as the git worktree branch when one is created. */
+  branch?: string
 }
 
 export interface PtyCreateResult {

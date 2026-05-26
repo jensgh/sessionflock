@@ -34,24 +34,48 @@ export interface SessionCwd {
   branch: string | null
 }
 
+/** Turn a free-text task name into a git-branch-safe slug (empty if unusable). */
+function slugifyBranch(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._/-]+/g, '-') // git-unsafe chars -> dash
+    .replace(/^[-/.]+|[-/.]+$/g, '') // no leading/trailing separators
+    .replace(/\.lock$/, '')
+    .slice(0, 50)
+}
+
 /**
  * Resolve where a session should run. If `useWorktree` and `requestedCwd` is a
- * git repo, create a fresh worktree and return it; on any failure (or not a
- * repo), fall back to running directly in `requestedCwd`.
+ * git repo, create a fresh worktree (clean checkout of HEAD on a new branch
+ * named after the task) and return it; on any failure (or not a repo), fall back
+ * to running directly in `requestedCwd`.
  */
-export function prepareSessionCwd(requestedCwd: string, useWorktree: boolean): SessionCwd {
+export function prepareSessionCwd(
+  requestedCwd: string,
+  useWorktree: boolean,
+  taskName?: string
+): SessionCwd {
   if (!useWorktree || !isGitRepo(requestedCwd)) {
     return { cwd: requestedCwd, worktree: null, branch: null }
   }
   try {
     const repoRoot = git(['rev-parse', '--show-toplevel'], requestedCwd)
     const token = randomUUID().slice(0, 8)
-    const branch = `sessionflock/${token}`
     const base = join(app.getPath('userData'), 'worktrees')
     mkdirSync(base, { recursive: true })
     const wtPath = join(base, `${basename(repoRoot)}-${token}`)
-    // -b <branch> from HEAD => a clean working tree with no uncommitted changes.
-    git(['worktree', 'add', '-b', branch, wtPath, 'HEAD'], repoRoot)
+
+    // Branch named after the task; fall back to a generic name when none given.
+    let branch = slugifyBranch(taskName ?? '') || `work-${token}`
+    try {
+      // -b <branch> from HEAD => a clean working tree with no uncommitted changes.
+      git(['worktree', 'add', '-b', branch, wtPath, 'HEAD'], repoRoot)
+    } catch {
+      // Branch name already exists — retry with a short unique suffix.
+      branch = `${branch}-${token}`
+      git(['worktree', 'add', '-b', branch, wtPath, 'HEAD'], repoRoot)
+    }
     return { cwd: wtPath, worktree: wtPath, branch }
   } catch (err) {
     console.error(
