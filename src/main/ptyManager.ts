@@ -25,6 +25,7 @@ import {
 } from '@shared/ipc-types'
 import { getAgent } from './agents/index.js'
 import { getSettings } from './settings/settingsStore.js'
+import { prepareSessionCwd } from './worktree.js'
 
 // --- Backpressure tuning -----------------------------------------------------
 // Claude can emit huge bursts of output (e.g. long tool results, file dumps).
@@ -107,11 +108,15 @@ export class PtyManager {
     const env = agent.buildEnv()
     env.SFLOCK_EVENT_FILE = eventFile
 
+    // Optionally isolate the session in a fresh git worktree (falls back to the
+    // requested folder if it isn't a repo or worktree creation fails).
+    const resolved = prepareSessionCwd(req.cwd, settings.gitWorktreeByDefault)
+
     let child: IPty
     try {
       child = pty.spawn(bin, args, {
         name: 'xterm-256color',
-        cwd: req.cwd,
+        cwd: resolved.cwd,
         cols: req.cols,
         rows: req.rows,
         env: env as { [key: string]: string }

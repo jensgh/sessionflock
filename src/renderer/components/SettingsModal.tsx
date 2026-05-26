@@ -13,6 +13,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
   const [defaultHomeFolder, setDefaultHomeFolder] = useState('')
   const [theme, setTheme] = useState<ThemeSetting>('system')
   const [defaultAgent, setDefaultAgent] = useState('claude')
+  const [gitWorktreeByDefault, setGitWorktreeByDefault] = useState(false)
   const [needsInputIdleMs, setNeedsInputIdleMs] = useState(1500)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -23,6 +24,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
     setDefaultHomeFolder(settings.defaultHomeFolder)
     setTheme(settings.theme)
     setDefaultAgent(settings.defaultAgent)
+    setGitWorktreeByDefault(settings.gitWorktreeByDefault)
     setNeedsInputIdleMs(settings.needsInputIdleMs)
   }, [settings])
 
@@ -56,6 +58,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         defaultHomeFolder: folder,
         theme,
         defaultAgent,
+        gitWorktreeByDefault,
         needsInputIdleMs: idle
       })
       onClose()
@@ -126,6 +129,23 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
           <span className="field-hint">
             Which terminal agent new sessions launch. More agents coming; only
             Claude Code is available right now.
+          </span>
+        </label>
+
+        <label className="field">
+          <span className="field-label">
+            <input
+              type="checkbox"
+              checked={gitWorktreeByDefault}
+              onChange={(e) => setGitWorktreeByDefault(e.target.checked)}
+            />{' '}
+            Run each session in a fresh git worktree
+          </span>
+          <span className="field-hint">
+            When the session’s folder is a git repository, start it in a new
+            worktree (a clean checkout on a new branch) so parallel sessions don’t
+            collide. Changes stay on their branch; worktrees aren’t removed
+            automatically.
           </span>
         </label>
 

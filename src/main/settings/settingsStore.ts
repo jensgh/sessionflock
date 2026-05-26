@@ -40,6 +40,9 @@ function migrate(raw: unknown): AppSettings {
   if (typeof r.defaultAgent === 'string' && r.defaultAgent.length > 0) {
     out.defaultAgent = r.defaultAgent
   }
+  if (typeof r.gitWorktreeByDefault === 'boolean') {
+    out.gitWorktreeByDefault = r.gitWorktreeByDefault
+  }
   if (typeof r.claudePath === 'string' || r.claudePath === null) {
     out.claudePath = r.claudePath
   }

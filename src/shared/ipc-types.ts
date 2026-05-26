@@ -94,6 +94,8 @@ export interface AppSettings {
   needsInputIdleMs: number
   /** Which terminal agent new sessions launch (see shared/agents.ts). */
   defaultAgent: string
+  /** When the session folder is a git repo, run it in a fresh git worktree. */
+  gitWorktreeByDefault: boolean
   /** Explicit path to the `claude` binary; null = auto-detect. */
   claudePath: string | null
 }
@@ -106,6 +108,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'defaultHomeFolder'> = {
   // or the terminal bell), never on a timer/guess. Set >0 to opt into a fallback.
   needsInputIdleMs: 0,
   defaultAgent: 'claude',
+  gitWorktreeByDefault: false,
   claudePath: null
 }
 
