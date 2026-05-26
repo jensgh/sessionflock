@@ -1,0 +1,42 @@
+appId: com.jensgh.sessionflock
+productName: Sessionflock
+directories:
+  buildResources: build
+  output: release/${version}
+
+# Include the built app + production deps; exclude sources and config. node_modules
+# (incl. the native node-pty) is bundled automatically and unpacked from the asar.
+files:
+  - out/**
+  - package.json
+  - '!**/*.map'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!agent-os/**'
+
+# node-pty ships a native .node addon that must live outside the asar at runtime.
+asarUnpack:
+  - '**/node_modules/node-pty/**'
+
+npmRebuild: true
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+  maintainer: Jens Heidarsson
+
+mac:
+  target:
+    - dmg
+    - zip
+  category: public.app-category.developer-tools
+  # No signing identity in CI yet — produce an unsigned build.
+  identity: null
+
+publish:
+  provider: github
+  owner: jensgh
+  repo: sessionflock
