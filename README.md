@@ -19,17 +19,26 @@ and (planned) isolates each in its own git worktree.
 
 - **Multi-terminal workspace** — sessions as tabs down the left; click to focus and
   interact with the agent in a real embedded terminal (xterm.js + node-pty).
-- **New session** in a configurable default folder.
+- **New session** in a configurable default folder — or via the **▾** in any folder.
 - **Agent selection** — a setting picks which agent new sessions launch.
+- **Git worktree isolation** *(optional)* — when the folder is a git repo, run each
+  session in a fresh worktree on its own branch so parallel sessions don't collide.
+- **Ask on new session** *(optional)* — prompt for a short task name that names the
+  tab and the git branch.
 - **"Needs you" indicator** — a tab dot when a backgrounded session is waiting for
   you, driven by real signals (the agent's lifecycle hooks / terminal bell), not a timer.
+- **Copy / paste** — `Ctrl+Shift+C` / `Cmd+C` and `Ctrl+Shift+V` / `Cmd+V`, plus a
+  right-click menu. (Hold **Shift** while dragging to select when the agent captures
+  the mouse.)
 - **Auto tab naming** from the running program, with manual rename.
 - **Session persistence** — your open tabs reopen on restart (fresh agent processes).
 - **Close with confirmation.**
+- **Auto-update** — installed apps update themselves from GitHub Releases
+  (Linux/Windows; macOS pending code-signing).
 - **Light / dark / system theme.**
 
-Roadmap (worktree isolation, existing-session browse/resume, ad-hoc folder launch,
-usage stats, Windows support, and more) lives in [`agent-os/product/roadmap.md`](agent-os/product/roadmap.md).
+More (existing-session browse/resume, usage stats, Windows support, and more) is
+planned for after launch.
 
 ## Install
 
