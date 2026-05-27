@@ -45,8 +45,19 @@ planned for after launch.
 Download the installer for your OS from the [Releases](../../releases) page:
 
 - **Linux:** `.AppImage` (mark executable and run) or `.deb`.
-- **macOS:** `.dmg`. The build is currently **unsigned**, so on first launch use
-  right-click → Open (or *System Settings → Privacy & Security → Open Anyway*).
+- **macOS:** `.dmg`. The build is currently **unsigned and not notarized**, so after
+  copying the app to `/Applications`, macOS quarantines it and reports it as
+  *"damaged and can't be opened"*. The app is fine — clear the quarantine flag once
+  from Terminal:
+
+  ```bash
+  xattr -cr /Applications/Sessionflock.app
+  ```
+
+  Then open it normally. (Right-click → Open is **not** enough for the "damaged"
+  message, particularly on Apple Silicon.)
+
+  This is a workaround until the macOS build is properly code-signed and notarized.
 
 You'll also need the agent's CLI installed and on your PATH — for Claude Code, the
 `claude` binary (Sessionflock auto-detects it; you can also set its path in Settings).
