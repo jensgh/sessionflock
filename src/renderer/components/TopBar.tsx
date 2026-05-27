@@ -9,34 +9,39 @@ export function TopBar(): JSX.Element {
   const { settings } = useSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [creating, setCreating] = useState(false)
-  // When worktree isolation is on, we prompt for a task name before creating;
-  // this holds the folder we're about to start a session in.
-  const [pendingCwd, setPendingCwd] = useState<string | null>(null)
+  // When a prompt is needed before starting, this holds the target folder and
+  // whether to offer the worktree toggle (worktree mode = "ask").
+  const [pending, setPending] = useState<{ cwd: string; showWorktree: boolean } | null>(null)
 
-  const newSession = async (cwd: string, task?: string): Promise<void> => {
+  const newSession = async (cwd: string, task: string, useWorktree: boolean): Promise<void> => {
     if (!settings || creating) return
     setCreating(true)
     try {
-      const name = task && task.length > 0 ? task : undefined
+      const name = task.length > 0 ? task : undefined
       await createSession({
         cwd,
         theme: settings.theme,
         activate: true,
+        useWorktree,
         branch: name, // → git worktree branch (when one is created)
         name, // also use the task as the tab name…
-        isManualName: !!name // …and keep it from being overwritten by the agent
+        isManualName: !!name // …kept from being overwritten by the agent
       })
     } finally {
       setCreating(false)
     }
   }
 
-  // If "ask on new session" is on, prompt for a task name first (names the tab
-  // and, when worktree isolation is on, the branch). Otherwise start immediately.
+  // Decide whether to prompt, based on worktree mode + the "ask" setting.
   const startSession = (cwd: string): void => {
     if (!settings) return
-    if (settings.askOnNewSession) setPendingCwd(cwd)
-    else void newSession(cwd)
+    const mode = settings.worktreeMode
+    const needDialog = settings.askOnNewSession || mode === 'ask'
+    if (needDialog) {
+      setPending({ cwd, showWorktree: mode === 'ask' })
+    } else {
+      void newSession(cwd, '', mode === 'always')
+    }
   }
 
   const onNewSession = (): void => {
@@ -90,18 +95,29 @@ export function TopBar(): JSX.Element {
 
       {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
 
-      {pendingCwd !== null && (
+      {pending !== null && settings && (
         <PromptModal
           title="New session"
-          label="What are you working on? (used for the git branch + tab name)"
+          label="What are you working on? (names the tab + git branch)"
           placeholder="e.g. fix login redirect"
           confirmLabel="Start"
-          onSubmit={(value) => {
-            const cwd = pendingCwd
-            setPendingCwd(null)
-            void newSession(cwd, value.trim())
+          showWorktree={pending.showWorktree}
+          onSubmit={(value, useWorktreeChecked) => {
+            const { cwd, showWorktree } = pending
+            setPending(null)
+            // mode "ask" → the checkbox; otherwise mode decides.
+            const useWorktree = showWorktree
+              ? useWorktreeChecked
+              : settings.worktreeMode === 'always'
+            void newSession(cwd, value.trim(), useWorktree)
           }}
-          onCancel={() => setPendingCwd(null)}
+          onSkip={() => {
+            const { cwd } = pending
+            setPending(null)
+            // Plain session: no task name; worktree only if the mode is "always".
+            void newSession(cwd, '', settings.worktreeMode === 'always')
+          }}
+          onCancel={() => setPending(null)}
         />
       )}
     </header>

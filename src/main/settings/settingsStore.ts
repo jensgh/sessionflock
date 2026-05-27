@@ -40,8 +40,11 @@ function migrate(raw: unknown): AppSettings {
   if (typeof r.defaultAgent === 'string' && r.defaultAgent.length > 0) {
     out.defaultAgent = r.defaultAgent
   }
-  if (typeof r.gitWorktreeByDefault === 'boolean') {
-    out.gitWorktreeByDefault = r.gitWorktreeByDefault
+  if (r.worktreeMode === 'always' || r.worktreeMode === 'never' || r.worktreeMode === 'ask') {
+    out.worktreeMode = r.worktreeMode
+  } else if (typeof r.gitWorktreeByDefault === 'boolean') {
+    // Migrate the old boolean setting.
+    out.worktreeMode = r.gitWorktreeByDefault ? 'always' : 'never'
   }
   if (typeof r.askOnNewSession === 'boolean') {
     out.askOnNewSession = r.askOnNewSession

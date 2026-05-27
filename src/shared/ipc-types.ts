@@ -34,6 +34,8 @@ export interface PtyCreateRequest {
   rows: number
   /** Optional task name; used as the git worktree branch when one is created. */
   branch?: string
+  /** Whether to run this session in a fresh git worktree (decided by the UI). */
+  useWorktree?: boolean
 }
 
 export interface PtyCreateResult {
@@ -87,6 +89,14 @@ export interface PtyAttentionPayload {
 
 export type ThemeSetting = 'system' | 'light' | 'dark'
 
+/**
+ * Git worktree isolation for a session whose folder is a git repo:
+ *  - 'always' — always run in a fresh worktree
+ *  - 'never'  — never
+ *  - 'ask'    — prompt on each new session
+ */
+export type WorktreeMode = 'always' | 'never' | 'ask'
+
 export interface AppSettings {
   version: 1
   /** Absolute path; default cwd for new sessions. */
@@ -96,8 +106,8 @@ export interface AppSettings {
   needsInputIdleMs: number
   /** Which terminal agent new sessions launch (see shared/agents.ts). */
   defaultAgent: string
-  /** When the session folder is a git repo, run it in a fresh git worktree. */
-  gitWorktreeByDefault: boolean
+  /** Git worktree isolation behaviour for new sessions. */
+  worktreeMode: WorktreeMode
   /** Prompt for a task name when starting a session (names the tab + branch). */
   askOnNewSession: boolean
   /** Explicit path to the `claude` binary; null = auto-detect. */
@@ -112,7 +122,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'defaultHomeFolder'> = {
   // or the terminal bell), never on a timer/guess. Set >0 to opt into a fallback.
   needsInputIdleMs: 0,
   defaultAgent: 'claude',
-  gitWorktreeByDefault: false,
+  worktreeMode: 'never',
   askOnNewSession: false,
   claudePath: null
 }

@@ -4,8 +4,8 @@ A cross-platform desktop workspace for running and managing many **terminal AI-a
 
 - **Multi-terminal workspace** — sessions as tabs down the left; each is a real embedded terminal (xterm.js + node-pty).
 - **Agent selection** — choose which agent new sessions launch.
-- **Git worktree isolation** *(optional)* — run each session in a fresh git worktree on its own branch so parallel sessions don't collide.
-- **Ask on new session** *(optional)* — name the task; it names the tab and the git branch.
+- **Git worktree isolation** — **Always / Never / Ask each time**; run a session in a fresh git worktree on its own branch so parallel sessions don't collide.
+- **Ask on new session** *(optional)* — name the task; it names the tab and the git branch. The new-session prompt has a **Skip** button to start right away.
 - **"Needs you" indicator** — a tab dot when a backgrounded session is waiting for you (driven by the agent's lifecycle hooks / terminal bell).
 - **Copy / paste** — `Ctrl+Shift+C` / `Cmd+C` and `Ctrl+Shift+V` / `Cmd+V`, plus a right-click menu.
 - **Auto tab naming** with manual rename, and **session persistence** (open tabs reopen on restart).

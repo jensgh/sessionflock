@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { ThemeSetting } from '@shared/ipc-types'
+import type { ThemeSetting, WorktreeMode } from '@shared/ipc-types'
 import { AGENTS } from '@shared/agents'
 import { useSettings } from '../settings/SettingsContext'
 
@@ -13,7 +13,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
   const [defaultHomeFolder, setDefaultHomeFolder] = useState('')
   const [theme, setTheme] = useState<ThemeSetting>('system')
   const [defaultAgent, setDefaultAgent] = useState('claude')
-  const [gitWorktreeByDefault, setGitWorktreeByDefault] = useState(false)
+  const [worktreeMode, setWorktreeMode] = useState<WorktreeMode>('never')
   const [askOnNewSession, setAskOnNewSession] = useState(false)
   const [needsInputIdleMs, setNeedsInputIdleMs] = useState(1500)
   const [saving, setSaving] = useState(false)
@@ -25,7 +25,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
     setDefaultHomeFolder(settings.defaultHomeFolder)
     setTheme(settings.theme)
     setDefaultAgent(settings.defaultAgent)
-    setGitWorktreeByDefault(settings.gitWorktreeByDefault)
+    setWorktreeMode(settings.worktreeMode)
     setAskOnNewSession(settings.askOnNewSession)
     setNeedsInputIdleMs(settings.needsInputIdleMs)
   }, [settings])
@@ -60,7 +60,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         defaultHomeFolder: folder,
         theme,
         defaultAgent,
-        gitWorktreeByDefault,
+        worktreeMode,
         askOnNewSession,
         needsInputIdleMs: idle
       })
@@ -136,19 +136,21 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         </label>
 
         <label className="field">
-          <span className="field-label">
-            <input
-              type="checkbox"
-              checked={gitWorktreeByDefault}
-              onChange={(e) => setGitWorktreeByDefault(e.target.checked)}
-            />{' '}
-            Run each session in a fresh git worktree
-          </span>
+          <span className="field-label">Git worktree for new sessions</span>
+          <select
+            className="field-input"
+            value={worktreeMode}
+            onChange={(e) => setWorktreeMode(e.target.value as WorktreeMode)}
+          >
+            <option value="never">Never</option>
+            <option value="always">Always</option>
+            <option value="ask">Ask each time</option>
+          </select>
           <span className="field-hint">
-            When the session’s folder is a git repository, start it in a new
+            When the folder is a git repository, run the session in a fresh
             worktree (a clean checkout on a new branch) so parallel sessions don’t
-            collide. Changes stay on their branch; worktrees aren’t removed
-            automatically.
+            collide. “Ask each time” prompts on each new session. Changes stay on
+            their branch; worktrees aren’t removed automatically.
           </span>
         </label>
 

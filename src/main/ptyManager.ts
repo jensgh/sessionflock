@@ -110,7 +110,7 @@ export class PtyManager {
 
     // Optionally isolate the session in a fresh git worktree (falls back to the
     // requested folder if it isn't a repo or worktree creation fails).
-    const resolved = prepareSessionCwd(req.cwd, settings.gitWorktreeByDefault, req.branch)
+    const resolved = prepareSessionCwd(req.cwd, req.useWorktree ?? false, req.branch)
 
     let child: IPty
     try {

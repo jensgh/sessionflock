@@ -5,20 +5,29 @@ interface PromptModalProps {
   label: string
   placeholder?: string
   confirmLabel?: string
-  onSubmit: (value: string) => void
+  /** Show a "Run in a git worktree" checkbox (worktree mode = "ask"). */
+  showWorktree?: boolean
+  worktreeDefault?: boolean
+  onSubmit: (value: string, useWorktree: boolean) => void
+  /** Start the session right away without naming it (and without a worktree). */
+  onSkip?: () => void
   onCancel: () => void
 }
 
-/** A tiny single-input modal (e.g. naming a task/branch for a new session). */
+/** A small new-session dialog: a task name and (optionally) a worktree toggle. */
 export function PromptModal({
   title,
   label,
   placeholder,
   confirmLabel = 'Start',
+  showWorktree = false,
+  worktreeDefault = false,
   onSubmit,
+  onSkip,
   onCancel
 }: PromptModalProps): JSX.Element {
   const [value, setValue] = useState('')
+  const [useWorktree, setUseWorktree] = useState(worktreeDefault)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -32,6 +41,8 @@ export function PromptModal({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onCancel])
+
+  const submit = (): void => onSubmit(value, useWorktree)
 
   return (
     <div className="modal-overlay" onMouseDown={onCancel}>
@@ -54,19 +65,36 @@ export function PromptModal({
             spellCheck={false}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') onSubmit(value)
+              if (e.key === 'Enter') submit()
             }}
           />
         </label>
+        {showWorktree && (
+          <label className="field">
+            <span className="field-label">
+              <input
+                type="checkbox"
+                checked={useWorktree}
+                onChange={(e) => setUseWorktree(e.target.checked)}
+              />{' '}
+              Run in a fresh git worktree
+            </span>
+            <span className="field-hint">
+              Creates a clean checkout on a new branch (named from above) so this
+              session doesn't collide with others. Only if the folder is a git repo.
+            </span>
+          </label>
+        )}
         <div className="modal-actions">
           <button type="button" className="btn" onClick={onCancel}>
             Cancel
           </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => onSubmit(value)}
-          >
+          {onSkip && (
+            <button type="button" className="btn" onClick={onSkip}>
+              Skip
+            </button>
+          )}
+          <button type="button" className="btn btn-primary" onClick={submit}>
             {confirmLabel}
           </button>
         </div>
