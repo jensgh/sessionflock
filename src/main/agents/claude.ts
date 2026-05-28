@@ -8,8 +8,8 @@
 // deferred on Windows, so we launch plain `claude` there — see resolveLaunch.
 
 import { execFileSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { existsSync, writeFileSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
 import { delimiter, join } from 'node:path'
 import type { AgentDefinition, AgentLaunch } from './types.js'
 
@@ -180,6 +180,46 @@ const SESSION_SETTINGS = JSON.stringify({
   hooks
 })
 
+// --- Windows hooks -----------------------------------------------------------
+// The POSIX hook commands above don't run under Windows `cmd`. On Windows we run
+// the equivalent PowerShell via `-EncodedCommand` (a base64 UTF-16LE script): no
+// quotes/spaces/`$VAR` survive to be mangled by whatever shell Claude uses, and
+// the whole settings blob is delivered to claude as a temp FILE (`--settings
+// <path>`), sidestepping cmd argument quoting entirely. Errors are swallowed so a
+// hook can never block the turn. (Untested on Windows — see roadmap.)
+function psEncoded(script: string): string {
+  const b64 = Buffer.from(script, 'utf16le').toString('base64')
+  return `powershell -NoProfile -NonInteractive -EncodedCommand ${b64}`
+}
+// Capture the hook's stdin JSON (incl. transcript_path) into the meta file.
+const WIN_CAPTURE =
+  "$ErrorActionPreference='SilentlyContinue'; " +
+  '[Console]::In.ReadToEnd() | Set-Content -LiteralPath $env:SFLOCK_META_FILE -Encoding utf8 -NoNewline'
+const winMark = (kind: string): string =>
+  `${WIN_CAPTURE}; Add-Content -LiteralPath $env:SFLOCK_EVENT_FILE -Encoding utf8 -Value '${kind}'`
+const winEntry = (command: string): { hooks: Array<{ type: string; command: string }> } => ({
+  hooks: [{ type: 'command', command }]
+})
+const winHooks: Record<string, unknown> = {
+  SessionStart: [winEntry(psEncoded(WIN_CAPTURE))],
+  Stop: [winEntry(psEncoded(winMark('done')))],
+  Notification: [winEntry(psEncoded(winMark('ask')))]
+}
+
+let winSettingsPath: string | undefined
+/** Write the Windows settings JSON to a temp file once; return its path. */
+function ensureWinSettingsFile(): string {
+  if (winSettingsPath) return winSettingsPath
+  const path = join(tmpdir(), 'sessionflock-claude-win-settings.json')
+  try {
+    writeFileSync(path, JSON.stringify({ preferredNotifChannel: 'terminal_bell', hooks: winHooks }))
+  } catch {
+    // If we can't write it, fall through — resolveLaunch handles a missing file.
+  }
+  winSettingsPath = path
+  return path
+}
+
 export const claudeAgent: AgentDefinition = {
   id: 'claude',
   label: 'Claude Code',
@@ -190,13 +230,13 @@ export const claudeAgent: AgentDefinition = {
       throw new Error('Could not find the `claude` binary. Set its path in Settings.')
     }
     if (isWindows) {
-      // Hooks are POSIX-shell and deferred on Windows, so launch plain `claude`
-      // (the terminal still works; precise dot/stats/auto-name are off). ConPTY
-      // can't exec a .cmd/.bat shim directly — route those through cmd.exe.
+      // Settings (with PowerShell hooks) delivered as a FILE to avoid cmd quoting.
+      // ConPTY can't exec a .cmd/.bat shim directly — route those through cmd.exe.
+      const baseArgs = ['--settings', ensureWinSettingsFile()]
       if (/\.(cmd|bat)$/i.test(bin)) {
-        return { bin: process.env.ComSpec || 'cmd.exe', args: ['/c', bin] }
+        return { bin: process.env.ComSpec || 'cmd.exe', args: ['/c', bin, ...baseArgs] }
       }
-      return { bin, args: [] }
+      return { bin, args: baseArgs }
     }
     return { bin, args: ['--settings', SESSION_SETTINGS] }
   }

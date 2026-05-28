@@ -1,14 +1,51 @@
 name: Release
 
-# Push a tag like v0.1.0 to build installers on each OS, then publish ONE release
-# (with notes from RELEASE_NOTES.md) carrying all installers + auto-update metadata.
+# Two ways to release ONE GitHub Release (installers for each OS + auto-update
+# metadata, notes from RELEASE_NOTES.md):
+#   1. Merge to main with a bumped package.json version → the gate sees that
+#      `v<version>` isn't released yet and builds + publishes it (creates the tag).
+#   2. Push a tag `v*` manually → always builds + publishes that tag.
+# Normal pushes to main (version unchanged / already released) just run the cheap
+# gate job and stop.
 on:
   push:
+    branches: [main]
     tags:
       - 'v*'
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      release: ${{ steps.decide.outputs.release }}
+      tag: ${{ steps.decide.outputs.tag }}
+      version: ${{ steps.decide.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: decide
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"; version="${tag#v}"; release=true
+          else
+            version="$(node -p "require('./package.json').version")"; tag="v$version"
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              release=false   # this version is already published
+            else
+              release=true
+            fi
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Decision: release=$release tag=$tag version=$version"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.release == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +78,8 @@ jobs:
             !release/**/win-unpacked/**
 
   publish:
-    needs: build
+    needs: [gate, build]
+    if: needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -53,15 +91,17 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.gate.outputs.tag }}
+          VERSION: ${{ needs.gate.outputs.version }}
         run: |
-          version="${GITHUB_REF_NAME#v}"
           # NUL-delimited into an array so filenames with spaces survive; skip the
           # unpacked app tree (only the installers + update metadata get attached).
           mapfile -d '' files < <(find dist -type f -not -path '*/win-unpacked/*' \
             \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' \
                -o -name '*.exe' -o -name '*.blockmap' -o -name 'latest*.yml' \) -print0)
           printf 'Attaching: %s\n' "${files[@]}"
-          gh release create "$GITHUB_REF_NAME" \
-            --title "Sessionflock $version" \
+          # On a main-triggered run this also creates the tag at the merge commit.
+          gh release create "$TAG" \
+            --title "Sessionflock $VERSION" \
             --notes-file RELEASE_NOTES.md \
             "${files[@]}"

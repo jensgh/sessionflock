@@ -34,7 +34,8 @@ export function transcriptPathFromMeta(metaFile: string): string | null {
     return null // no hook has fired yet — session hasn't reported its transcript
   }
   try {
-    const meta = JSON.parse(raw) as { transcript_path?: unknown }
+    // Strip a leading BOM — PowerShell's utf8 writer (Windows hooks) prepends one.
+    const meta = JSON.parse(raw.replace(/^﻿/, '')) as { transcript_path?: unknown }
     return typeof meta.transcript_path === 'string' && meta.transcript_path.length > 0
       ? meta.transcript_path
       : null
