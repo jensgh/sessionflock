@@ -1,0 +1,21 @@
+# Agent OS Standards Index
+
+agents:
+  adapters:
+    description: Agent-agnostic AgentDefinition interface, registry, adding an agent, PATH/hook responsibilities
+
+electron:
+  error-handling:
+    description: Errors-as-values across IPC, non-fatal try/catch, guarding transient states
+  ipc-and-process-model:
+    description: Main owns PTYs/state, thin preload, shared ipc-types contract, invoke vs send, multiplexing
+  persistence:
+    description: JSON in userData, atomic temp-file+rename writes, tolerant reads, versioned migration
+
+global:
+  conventions:
+    description: Why-comments, SFLOCK_ env prefix, TypeScript style, discriminated unions, backpressure
+
+renderer:
+  state-and-terminals:
+    description: Zustand metadata-only store, TerminalRegistry for live xterm, no-op set guards, sticky attention

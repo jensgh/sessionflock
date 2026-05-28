@@ -6,6 +6,10 @@ release/
 .DS_Store
 .vite/
 
-# Local agent tooling and internal planning — not part of the public repo
+# Local agent tooling and internal planning — not part of the public repo.
+# The product vision and coding standards are contributor-facing, so track those;
+# keep .claude/ and the point-in-time specs local.
 .claude/
-agent-os/
+agent-os/*
+!agent-os/product/
+!agent-os/standards/
