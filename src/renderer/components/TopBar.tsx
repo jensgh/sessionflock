@@ -5,16 +5,8 @@ import { SettingsModal } from './SettingsModal'
 import { PromptModal } from './PromptModal'
 import { UsageMeter } from './UsageMeter'
 
-type PanelKind = 'md' | 'mcp' | 'skills'
-
-interface TopBarProps {
-  onOpenSearch: () => void
-  rightPanel: PanelKind | 'none'
-  onTogglePanel: (kind: PanelKind) => void
-}
-
-/** Top bar: New Session + usage (left); search, session panels, Settings (right). */
-export function TopBar({ onOpenSearch, rightPanel, onTogglePanel }: TopBarProps): JSX.Element {
+/** Top bar: New Session + search + usage (left); Settings (right). */
+export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }): JSX.Element {
   const { settings } = useSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -104,39 +96,6 @@ export function TopBar({ onOpenSearch, rightPanel, onTogglePanel }: TopBarProps)
       <UsageMeter />
 
       <div className="top-bar-spacer" />
-
-      <button
-        type="button"
-        className={`btn btn-icon${rightPanel === 'md' ? ' btn-active' : ''}`}
-        onClick={() => onTogglePanel('md')}
-        title="Markdown files read in this session"
-        aria-label="Markdown files read in this session"
-        aria-pressed={rightPanel === 'md'}
-      >
-        <span aria-hidden="true">❡</span>
-      </button>
-
-      <button
-        type="button"
-        className={`btn btn-icon${rightPanel === 'mcp' ? ' btn-active' : ''}`}
-        onClick={() => onTogglePanel('mcp')}
-        title="MCP servers used in this session"
-        aria-label="MCP servers used in this session"
-        aria-pressed={rightPanel === 'mcp'}
-      >
-        <span aria-hidden="true">⚇</span>
-      </button>
-
-      <button
-        type="button"
-        className={`btn btn-icon${rightPanel === 'skills' ? ' btn-active' : ''}`}
-        onClick={() => onTogglePanel('skills')}
-        title="Skills used in this session"
-        aria-label="Skills used in this session"
-        aria-pressed={rightPanel === 'skills'}
-      >
-        <span aria-hidden="true">✦</span>
-      </button>
 
       <button
         type="button"

@@ -12,6 +12,7 @@ import { TabRail } from './components/TabRail'
 import { TerminalPane } from './components/TerminalPane'
 import { SearchOverlay } from './components/SearchOverlay'
 import { SessionPanel, type PanelKind } from './components/SessionPanel'
+import { RightTabs } from './components/RightTabs'
 
 const PERSIST_DEBOUNCE_MS = 500
 
@@ -271,17 +272,17 @@ function AppShell(): JSX.Element {
 
   return (
     <div className="app-root">
-      <TopBar
-        onOpenSearch={() => setSearchOpen(true)}
-        rightPanel={rightPanel}
-        onTogglePanel={(kind) => setRightPanel((cur) => (cur === kind ? 'none' : kind))}
-      />
+      <TopBar onOpenSearch={() => setSearchOpen(true)} />
       <div className="app-body">
         <TabRail />
         <TerminalPane />
         {rightPanel !== 'none' && (
           <SessionPanel kind={rightPanel} onClose={() => setRightPanel('none')} />
         )}
+        <RightTabs
+          active={rightPanel}
+          onToggle={(kind) => setRightPanel((cur) => (cur === kind ? 'none' : kind))}
+        />
       </div>
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>
