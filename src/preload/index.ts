@@ -8,6 +8,7 @@ import {
   type PtyCreateResponse,
   type PtyAttentionPayload,
   type PtyStatsPayload,
+  type PtyFirstPromptPayload,
   type PtyDataPayload,
   type PtyExitPayload,
   type PtyKillPayload,
@@ -61,6 +62,16 @@ const api: RendererApi = {
     ipcRenderer.on(IPC.PTY_STATS, listener)
     return () => ipcRenderer.removeListener(IPC.PTY_STATS, listener)
   },
+
+  onPtyFirstPrompt: (cb: (payload: PtyFirstPromptPayload) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, payload: PtyFirstPromptPayload): void =>
+      cb(payload)
+    ipcRenderer.on(IPC.PTY_FIRST_PROMPT, listener)
+    return () => ipcRenderer.removeListener(IPC.PTY_FIRST_PROMPT, listener)
+  },
+
+  deriveSessionName: (prompt: string): Promise<string | null> =>
+    ipcRenderer.invoke(IPC.AUTONAME_DERIVE, prompt),
 
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS_GET),
 

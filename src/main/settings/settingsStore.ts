@@ -52,6 +52,9 @@ function migrate(raw: unknown): AppSettings {
   if (typeof r.desktopNotifications === 'boolean') {
     out.desktopNotifications = r.desktopNotifications
   }
+  if (typeof r.autoNameSessions === 'boolean') {
+    out.autoNameSessions = r.autoNameSessions
+  }
   if (typeof r.claudePath === 'string' || r.claudePath === null) {
     out.claudePath = r.claudePath
   }

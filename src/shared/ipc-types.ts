@@ -18,6 +18,7 @@ export const IPC = {
   CLIPBOARD_READ: 'clipboard:read',
   USAGE_ACCOUNT: 'usage:account',
   MD_LIST: 'md:list',
+  AUTONAME_DERIVE: 'autoname:derive',
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
   CLIPBOARD_WRITE: 'clipboard:write',
@@ -28,7 +29,8 @@ export const IPC = {
   PTY_DATA: 'pty:data',
   PTY_EXIT: 'pty:exit',
   PTY_ATTENTION: 'pty:attention',
-  PTY_STATS: 'pty:stats'
+  PTY_STATS: 'pty:stats',
+  PTY_FIRST_PROMPT: 'pty:firstPrompt'
 } as const
 
 // ---- PTY lifecycle ----------------------------------------------------------
@@ -109,6 +111,12 @@ export interface AccountUsage {
   sevenDayPct: number
 }
 
+/** The first user prompt detected in a session's transcript (for auto-naming). */
+export interface PtyFirstPromptPayload {
+  id: SessionId
+  prompt: string
+}
+
 /** Per-session token usage, read from the agent's transcript (Claude only). */
 export interface PtyStatsPayload {
   id: SessionId
@@ -147,6 +155,8 @@ export interface AppSettings {
   askOnNewSession: boolean
   /** OS notification when a backgrounded session needs you and the app is unfocused. */
   desktopNotifications: boolean
+  /** Auto-name unnamed sessions from their first prompt (one headless Claude call). */
+  autoNameSessions: boolean
   /** Explicit path to the `claude` binary; null = auto-detect. */
   claudePath: string | null
 }
@@ -162,6 +172,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'defaultHomeFolder'> = {
   worktreeMode: 'never',
   askOnNewSession: false,
   desktopNotifications: true,
+  autoNameSessions: true,
   claudePath: null
 }
 
@@ -175,6 +186,8 @@ export interface PersistedSession {
   order: number
   /** Agent this session runs. Optional for back-compat with older snapshots. */
   agentId?: string
+  /** Whether the name was auto-derived from the first prompt (sticky over title). */
+  autoNamedFromIntent?: boolean
 }
 
 export interface SessionSnapshot {
@@ -204,6 +217,10 @@ export interface RendererApi {
   onPtyAttention(cb: (payload: PtyAttentionPayload) => void): () => void
   /** Subscribe to per-session token-usage updates; returns an unsubscribe fn. */
   onPtyStats(cb: (payload: PtyStatsPayload) => void): () => void
+  /** Subscribe to the first-prompt signal (for auto-naming); returns unsubscribe. */
+  onPtyFirstPrompt(cb: (payload: PtyFirstPromptPayload) => void): () => void
+  /** Summarize a prompt into a short session name via a headless agent call. */
+  deriveSessionName(prompt: string): Promise<string | null>
   getSettings(): Promise<AppSettings>
   setSettings(patch: Partial<AppSettings>): Promise<AppSettings>
   /** Open the OS folder picker; resolves to the chosen path or null. */

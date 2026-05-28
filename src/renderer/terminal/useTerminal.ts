@@ -47,6 +47,7 @@ export interface CreateSessionInput {
   id?: SessionId
   name?: string
   isManualName?: boolean
+  autoNamedFromIntent?: boolean
   order?: number
   /** Whether to focus the new session after creation. */
   activate?: boolean
@@ -79,6 +80,7 @@ export async function createSession(input: CreateSessionInput): Promise<SessionI
     cwd: input.cwd,
     name: fallbackName,
     isManualName: input.isManualName ?? false,
+    autoNamedFromIntent: input.autoNamedFromIntent,
     agentId: input.agentId,
     order: input.order,
     status: 'starting'

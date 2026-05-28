@@ -26,7 +26,7 @@ import {
 import { getAgent } from './agents/index.js'
 import { getSettings } from './settings/settingsStore.js'
 import { prepareSessionCwd } from './worktree.js'
-import { readUsage } from './stats/usageReader.js'
+import { readUsage, readFirstPrompt } from './stats/usageReader.js'
 
 // --- Backpressure tuning -----------------------------------------------------
 // Claude can emit huge bursts of output (e.g. long tool results, file dumps).
@@ -65,6 +65,8 @@ interface Session {
   eventOffset: number
   /** Last stats pushed to the renderer, to suppress redundant sends. */
   lastStats: string | null
+  /** Whether the session's first prompt has been forwarded (auto-name trigger). */
+  firstPromptSent: boolean
 }
 
 export class PtyManager {
@@ -154,7 +156,8 @@ export class PtyManager {
       eventFile,
       watcher: null,
       eventOffset: 0,
-      lastStats: null
+      lastStats: null,
+      firstPromptSent: false
     }
     this.sessions.set(req.id, session)
     this.watchEvents(req.id, session)
@@ -275,6 +278,16 @@ export class PtyManager {
   /** Read each session's transcript and push changed token-usage stats. */
   private pollStats(): void {
     for (const [id, session] of this.sessions) {
+      // First prompt → auto-naming (once per session). The renderer decides
+      // whether to act (skips manually-named tabs).
+      if (!session.firstPromptSent) {
+        const prompt = readFirstPrompt(session.metaFile)
+        if (prompt) {
+          session.firstPromptSent = true
+          this.send(IPC.PTY_FIRST_PROMPT, { id, prompt })
+        }
+      }
+
       const usage = readUsage(session.metaFile)
       if (!usage) continue
       const payload = {

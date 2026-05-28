@@ -84,3 +84,38 @@ export function readUsage(metaFile: string): UsageStats | null {
     model
   }
 }
+
+/**
+ * The first human prompt in the session's transcript (for auto-naming), or null
+ * if none yet. Returns the first `user` message whose content is plain text —
+ * i.e. a typed prompt, not a tool result.
+ */
+export function readFirstPrompt(metaFile: string): string | null {
+  const transcript = transcriptPathFromMeta(metaFile)
+  if (!transcript) return null
+
+  let text: string
+  try {
+    text = readFileSync(transcript, 'utf8')
+  } catch {
+    return null
+  }
+
+  for (const line of text.split('\n')) {
+    if (!line.includes('"user"')) continue
+    let obj: { type?: string; isMeta?: boolean; message?: { content?: unknown } }
+    try {
+      obj = JSON.parse(line)
+    } catch {
+      continue
+    }
+    if (obj.type !== 'user' || obj.isMeta) continue
+    const content = obj.message?.content
+    // A typed prompt is a plain string; arrays are tool results / rich blocks.
+    if (typeof content === 'string') {
+      const trimmed = content.trim()
+      if (trimmed) return trimmed
+    }
+  }
+  return null
+}

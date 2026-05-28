@@ -16,6 +16,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
   const [worktreeMode, setWorktreeMode] = useState<WorktreeMode>('never')
   const [askOnNewSession, setAskOnNewSession] = useState(false)
   const [desktopNotifications, setDesktopNotifications] = useState(true)
+  const [autoNameSessions, setAutoNameSessions] = useState(true)
   const [needsInputIdleMs, setNeedsInputIdleMs] = useState(1500)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +30,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
     setWorktreeMode(settings.worktreeMode)
     setAskOnNewSession(settings.askOnNewSession)
     setDesktopNotifications(settings.desktopNotifications)
+    setAutoNameSessions(settings.autoNameSessions)
     setNeedsInputIdleMs(settings.needsInputIdleMs)
   }, [settings])
 
@@ -65,6 +67,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         worktreeMode,
         askOnNewSession,
         desktopNotifications,
+        autoNameSessions,
         needsInputIdleMs: idle
       })
       onClose()
@@ -186,6 +189,22 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
             Show an OS notification when a background session needs you or finishes,
             but only while the app window isn’t focused. Click it to jump to that
             session.
+          </span>
+        </label>
+
+        <label className="field">
+          <span className="field-label">
+            <input
+              type="checkbox"
+              checked={autoNameSessions}
+              onChange={(e) => setAutoNameSessions(e.target.checked)}
+            />{' '}
+            Auto-name sessions from the first prompt
+          </span>
+          <span className="field-hint">
+            For tabs you haven’t named, derive the title from your first prompt using a
+            quick headless agent call (uses a little usage). Manually renamed tabs are
+            left alone.
           </span>
         </label>
 

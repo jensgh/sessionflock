@@ -39,10 +39,11 @@ Linux (Ubuntu) and macOS.
 - ✅ **Worktree mode: Always / Never / Ask** — replace the on/off worktree toggle
   with a three-way choice; "Ask" prompts on each new session whether to run it in
   a fresh worktree (and, if so, names the branch).
-- **Auto-name sessions from intent** — instead of asking, derive the window + git
-  branch name from the user's first prompt(s) to the agent (a "Find out" action
-  triggers it). If the first prompt links to a task tracker (e.g. an Asana URL)
-  reachable via an MCP server, read the task and name the session/branch from it.
+- ✅ **Auto-name sessions from intent** — for tabs you haven't named, the first prompt
+  (read from the session transcript) is summarized by a headless `claude -p` call into a
+  short tab title automatically; the name is sticky over terminal titles and yields to a
+  manual rename. Setting toggle (default on). Deferred: naming the git branch from intent
+  (needs deferring worktree creation until the first prompt) and the Asana/MCP task lookup.
 - ✅ **Show agent usage stats** — current-session usage in the top bar (agent logo +
   context %), click to expand model + used/window tokens + fill bar, plus the
   claude.ai **plan usage** (5-hour + 7-day rate-limit windows) fetched from the OAuth

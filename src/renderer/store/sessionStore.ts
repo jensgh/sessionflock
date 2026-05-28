@@ -37,6 +37,8 @@ export interface SessionMeta {
   autoName: string
   /** Once the user renames a tab, auto titles no longer overwrite `name`. */
   isManualName: boolean
+  /** Name was auto-derived from the first prompt; sticky over terminal titles. */
+  autoNamedFromIntent: boolean
   /** Agent this session runs (drives the tab icon). */
   agentId: string
   order: number
@@ -56,6 +58,8 @@ export interface AddSessionInput {
   cwd: string
   name: string
   isManualName?: boolean
+  /** Restore path: keep an intent-derived name sticky across restart. */
+  autoNamedFromIntent?: boolean
   /** Agent this session runs; defaults to the built-in default agent. */
   agentId?: string
   /** Explicit order; defaults to appending at the end. */
@@ -73,6 +77,8 @@ interface SessionStoreState {
   setActive: (id: SessionId | null) => void
   renameSession: (id: SessionId, name: string) => void
   setAutoName: (id: SessionId, title: string) => void
+  /** Apply a name derived from the first prompt; ignored if manually named. */
+  applyIntentName: (id: SessionId, name: string) => void
   setStatus: (id: SessionId, status: SessionStatus) => void
   markActivity: (id: SessionId) => void
   setAttention: (id: SessionId, kind: AttentionKind) => void
@@ -100,6 +106,7 @@ export const useSessionStore = create<SessionStoreState>()(
           name: input.name,
           autoName: input.name,
           isManualName: input.isManualName ?? false,
+          autoNamedFromIntent: input.autoNamedFromIntent ?? false,
           agentId: input.agentId ?? DEFAULT_AGENT_ID,
           order,
           status: input.status ?? 'starting',
@@ -166,13 +173,31 @@ export const useSessionStore = create<SessionStoreState>()(
         const trimmed = title.trim()
         if (trimmed.length === 0) return state
         // Always record the latest auto title; only surface it as the displayed
-        // name when the user hasn't manually renamed the tab.
-        const name = existing.isManualName ? existing.name : trimmed
+        // name when the user hasn't manually renamed the tab OR pinned an
+        // intent-derived name (which should stick over later terminal titles).
+        const name =
+          existing.isManualName || existing.autoNamedFromIntent ? existing.name : trimmed
         if (existing.autoName === trimmed && existing.name === name) return state
         return {
           sessions: {
             ...state.sessions,
             [id]: { ...existing, autoName: trimmed, name }
+          }
+        }
+      }),
+
+    applyIntentName: (id, name) =>
+      set((state) => {
+        const existing = state.sessions[id]
+        if (!existing) return state
+        if (existing.isManualName) return state // a real rename wins
+        const trimmed = name.trim()
+        if (trimmed.length === 0) return state
+        if (existing.autoNamedFromIntent && existing.name === trimmed) return state
+        return {
+          sessions: {
+            ...state.sessions,
+            [id]: { ...existing, name: trimmed, autoNamedFromIntent: true }
           }
         }
       }),

@@ -50,6 +50,7 @@ function AppShell(): JSX.Element {
   const [mdPanelOpen, setMdPanelOpen] = useState(false)
   const idleMsRef = useRef(settings?.needsInputIdleMs ?? 1500)
   const notifyRef = useRef(settings?.desktopNotifications ?? true)
+  const autoNameRef = useRef(settings?.autoNameSessions ?? true)
 
   // Ctrl/Cmd+Shift+F opens cross-session search. Capture-phase + stopPropagation
   // so the chord doesn't also get forwarded into the focused terminal.
@@ -68,6 +69,7 @@ function AppShell(): JSX.Element {
     if (settings) {
       idleMsRef.current = settings.needsInputIdleMs
       notifyRef.current = settings.desktopNotifications
+      autoNameRef.current = settings.autoNameSessions
     }
   }, [settings])
 
@@ -103,6 +105,20 @@ function AppShell(): JSX.Element {
       useSessionStore.getState().setStats(id, { contextTokens, contextWindow, model })
     })
 
+    // First prompt → auto-name the tab (unless disabled or manually named).
+    const offFirstPrompt = window.api.onPtyFirstPrompt(({ id, prompt }) => {
+      if (!autoNameRef.current) return
+      const meta = useSessionStore.getState().sessions[id]
+      if (!meta || meta.isManualName || meta.autoNamedFromIntent) return
+      void window.api.deriveSessionName(prompt).then((name) => {
+        if (!name) return
+        // Re-check: the user may have renamed it during the async call.
+        const m = useSessionStore.getState().sessions[id]
+        if (!m || m.isManualName || m.autoNamedFromIntent) return
+        useSessionStore.getState().applyIntentName(id, name)
+      })
+    })
+
     const offExit = window.api.onPtyExit(({ id, exitCode, signal }) => {
       const live = TerminalRegistry.get(id)
       if (live?.idleTimer) {
@@ -126,6 +142,7 @@ function AppShell(): JSX.Element {
       offData()
       offAttention()
       offStats()
+      offFirstPrompt()
       offExit()
     }
   }, [])
@@ -152,6 +169,7 @@ function AppShell(): JSX.Element {
             cwd: persisted.cwd,
             name: persisted.name,
             isManualName: persisted.isManualName,
+            autoNamedFromIntent: persisted.autoNamedFromIntent,
             agentId: persisted.agentId,
             order: persisted.order,
             // Don't steal focus per-tab during restore; we set activeId below.
@@ -194,6 +212,7 @@ function AppShell(): JSX.Element {
             cwd: meta.cwd,
             name: meta.name,
             isManualName: meta.isManualName,
+            autoNamedFromIntent: meta.autoNamedFromIntent,
             agentId: meta.agentId,
             order: idx
           }

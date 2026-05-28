@@ -19,6 +19,7 @@ import { getSettings, setSettings } from '../settings/settingsStore.js'
 import { loadSnapshot, saveSnapshot } from '../persistence/sessionStore.js'
 import { getAccountUsage } from '../stats/accountUsage.js'
 import { listMarkdown } from '../mdFiles.js'
+import { deriveSessionName } from '../autoName.js'
 import { existsSync } from 'node:fs'
 
 export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
@@ -78,6 +79,11 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
   ipcMain.on(IPC.OPEN_PATH, (_e, p: string) => {
     if (typeof p === 'string' && existsSync(p)) void shell.openPath(p)
   })
+
+  // --- Auto-name a session from its first prompt -----------------------------
+  ipcMain.handle(IPC.AUTONAME_DERIVE, (_e, prompt: string) =>
+    typeof prompt === 'string' ? deriveSessionName(prompt) : Promise.resolve(null)
+  )
 
   // --- Open external links ---------------------------------------------------
   // The renderer hands us URLs clicked in a terminal. Only ever open http/https:
