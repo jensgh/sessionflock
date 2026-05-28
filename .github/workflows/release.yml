@@ -43,6 +43,20 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "Decision: release=$release tag=$tag version=$version"
 
+      # A release must type-check first. `npm run build` (esbuild) transpiles
+      # without type-checking, so this is the gate that actually catches type
+      # errors. Only runs when we're about to release — normal pushes stay cheap.
+      - if: steps.decide.outputs.release == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+      - if: steps.decide.outputs.release == 'true'
+        run: npm ci
+      - name: Type-check
+        if: steps.decide.outputs.release == 'true'
+        run: npm run typecheck
+
   build:
     needs: gate
     if: needs.gate.outputs.release == 'true'
