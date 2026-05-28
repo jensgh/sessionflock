@@ -43,8 +43,9 @@ Linux (Ubuntu) and macOS.
   branch name from the user's first prompt(s) to the agent (a "Find out" action
   triggers it). If the first prompt links to a task tracker (e.g. an Asana URL)
   reachable via an MCP server, read the task and name the session/branch from it.
-- **Show agent usage stats** — e.g. Claude usage from the user's account. Can be current session small in the top,
-  when user clicks it. It opens up more detailed usage stats (per-agent where supported). Agent logo, then the stats in %
+- ✅ **Show agent usage stats** — current-session usage in the top bar (agent logo +
+  context %), click to expand model + used/window tokens + fill bar
+  (spec `2026-05-28-1926-topbar-usage-stats`). Account-wide usage still possible later.
 - ✅ **Per-session token usage & context window** — under each session in the tab rail,
   show how many tokens that session has used and its context-window size/fill.
   (spec `2026-05-28-1849`; read from Claude transcripts. The top-bar usage stat from
