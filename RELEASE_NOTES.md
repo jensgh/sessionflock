@@ -1,5 +1,17 @@
 A cross-platform desktop workspace for running and managing many **terminal AI-agent sessions** at once — each in its own embedded terminal tab. Agent-agnostic, with **Claude Code** supported out of the box.
 
+## New in 0.2.0
+
+- **Clickable links** — URLs printed in the terminal open in your default browser.
+- **Agent icon per tab** — each tab shows the agent it's running.
+- **Per-session usage** — each tab shows its context-window fill; a top-bar meter shows the Claude icon + your **5-hour plan usage**, expandable to **5h / 7-day** plan windows plus the active session's model and context.
+- **Session panels** *(right-edge tabs)* — see, per session, the **markdown files it read**, the **MCP servers it used**, and the **skills it ran** (derived from the session itself).
+- **Search across sessions** — `Ctrl/Cmd+Shift+F` to search session names and terminal output; click a result to jump.
+- **Desktop notifications** — when a backgrounded session needs you or finishes (only while the app is unfocused); click to jump to it. Toggle in Settings.
+- **Auto-name sessions** — unnamed tabs are titled from your first prompt automatically. Toggle in Settings.
+- **Coloured "needs you" dot** — green when a turn finished, amber when it's waiting for your input.
+- **Smoother light theme.**
+
 ## Features
 
 - **Multi-terminal workspace** — sessions as tabs down the left; each is a real embedded terminal (xterm.js + node-pty).
