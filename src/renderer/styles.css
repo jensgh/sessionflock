@@ -170,9 +170,10 @@ body {
   background: var(--bg-hover);
   border: 1px solid var(--border);
   border-radius: 4px;
-  padding: 4px 8px;
+  /* Match the height of the sibling .btn-icon (search/settings) buttons. */
+  padding: 5px 8px;
   cursor: pointer;
-  line-height: 1;
+  line-height: 1.2;
 }
 
 .usage-meter-btn:hover {
@@ -194,7 +195,7 @@ body {
 .usage-popover {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 0;
   z-index: 20;
   min-width: 220px;
   padding: 10px 12px;

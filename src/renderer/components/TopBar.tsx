@@ -83,9 +83,9 @@ export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }): JSX.Elem
         </button>
       </div>
 
-      <div className="top-bar-spacer" />
-
       <UsageMeter />
+
+      <div className="top-bar-spacer" />
 
       <button
         type="button"
