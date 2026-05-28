@@ -1,6 +1,7 @@
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { WebglAddon } from '@xterm/addon-webgl'
+import { WebLinksAddon } from '@xterm/addon-web-links'
 import type { SessionId } from '@shared/ipc-types'
 import { useSessionStore } from '../store/sessionStore'
 import { xtermTheme, type ResolvedTheme } from '../theme'
@@ -50,6 +51,13 @@ class Registry {
     term.loadAddon(fit)
 
     const disposers: Array<() => void> = []
+
+    // Make URLs clickable. The custom handler routes through the main process
+    // (shell.openExternal via IPC) instead of xterm's default window.open, which
+    // the sandboxed renderer can't use; main validates the protocol.
+    const webLinks = new WebLinksAddon((_event, uri) => window.api.openExternal(uri))
+    term.loadAddon(webLinks)
+    disposers.push(() => webLinks.dispose())
 
     // Keystrokes -> main process. Typing clears any attention indicator for this
     // session (the indicator is otherwise sticky, cleared only on focus).

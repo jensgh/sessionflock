@@ -23,6 +23,7 @@ export function TopBar(): JSX.Element {
         theme: settings.theme,
         activate: true,
         useWorktree,
+        agentId: settings.defaultAgent,
         branch: name, // → git worktree branch (when one is created)
         name, // also use the task as the tab name…
         isManualName: !!name // …kept from being overwritten by the agent

@@ -10,3 +10,8 @@ export interface AgentInfo {
 export const AGENTS: readonly AgentInfo[] = [{ id: 'claude', label: 'Claude Code' }] as const
 
 export const DEFAULT_AGENT_ID = 'claude'
+
+/** Human label for an agent id; falls back to Claude for an unknown id. */
+export function agentLabel(id: string): string {
+  return AGENTS.find((a) => a.id === id)?.label ?? 'Claude Code'
+}

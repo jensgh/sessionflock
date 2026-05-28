@@ -3,7 +3,7 @@
 // (keystrokes via PTY_WRITE, and PTY_RESIZE which the preload sends, not
 // invokes — see preload/index.ts).
 
-import { BrowserWindow, clipboard, ipcMain } from 'electron'
+import { BrowserWindow, clipboard, ipcMain, shell } from 'electron'
 import {
   IPC,
   type AppSettings,
@@ -62,4 +62,21 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
   })
 
   ipcMain.handle(IPC.CLIPBOARD_READ, (): string => clipboard.readText())
+
+  // --- Open external links ---------------------------------------------------
+  // The renderer hands us URLs clicked in a terminal. Only ever open http/https:
+  // terminal output is untrusted, so we must not pass file:/javascript:/etc. to
+  // the OS handler.
+  ipcMain.on(IPC.OPEN_EXTERNAL, (_e, url: string) => {
+    if (typeof url !== 'string') return
+    let parsed: URL
+    try {
+      parsed = new URL(url)
+    } catch {
+      return // not a valid absolute URL
+    }
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+      void shell.openExternal(parsed.toString())
+    }
+  })
 }

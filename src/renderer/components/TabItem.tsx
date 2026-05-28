@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SessionId } from '@shared/ipc-types'
+import { agentLabel } from '@shared/agents'
 import { useSessionStore } from '../store/sessionStore'
+import { agentIcon } from '../agents/icons'
 
 interface TabItemProps {
   id: SessionId
   onRequestClose: (id: SessionId) => void
+}
+
+/** Compact token count: 1.2k, 165k, 1.4M. */
+function formatTokens(n: number): string {
+  if (n < 1000) return String(n)
+  if (n < 1_000_000) return `${Math.round(n / 1000)}k`
+  return `${(n / 1_000_000).toFixed(1)}M`
 }
 
 /**
@@ -56,6 +65,11 @@ export function TabItem({ id, onRequestClose }: TabItemProps): JSX.Element | nul
         ? 'tab-status-starting'
         : 'tab-status-running'
 
+  const hasStats = meta.contextWindow > 0
+  const contextPct = hasStats
+    ? Math.min(100, Math.round((meta.contextTokens / meta.contextWindow) * 100))
+    : 0
+
   return (
     <div
       className={`tab-item${isActive ? ' tab-item-active' : ''}`}
@@ -66,58 +80,90 @@ export function TabItem({ id, onRequestClose }: TabItemProps): JSX.Element | nul
         if (!editing) setActive(id)
       }}
     >
-      <span className={`tab-active-marker ${statusClass}`} aria-hidden="true">
-        {isActive ? '●' : '○'}
-      </span>
-
-      {editing ? (
-        <input
-          ref={inputRef}
-          className="tab-rename-input"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onClick={(e) => e.stopPropagation()}
-          onBlur={commitEdit}
-          onKeyDown={(e) => {
-            e.stopPropagation()
-            if (e.key === 'Enter') commitEdit()
-            else if (e.key === 'Escape') cancelEdit()
-          }}
-        />
-      ) : (
-        <span
-          className="tab-name"
-          onDoubleClick={(e) => {
-            e.stopPropagation()
-            beginEdit()
-          }}
-        >
-          {meta.name}
+      <div className="tab-row-top">
+        <span className={`tab-active-marker ${statusClass}`} aria-hidden="true">
+          {isActive ? '●' : '○'}
         </span>
-      )}
 
-      {!editing && needsAttention && (
-        <span
-          className="tab-attention"
-          title="Waiting for you"
-          aria-label="Waiting for you"
+        {editing ? (
+          <input
+            ref={inputRef}
+            className="tab-rename-input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onBlur={commitEdit}
+            onKeyDown={(e) => {
+              e.stopPropagation()
+              if (e.key === 'Enter') commitEdit()
+              else if (e.key === 'Escape') cancelEdit()
+            }}
+          />
+        ) : (
+          <span
+            className="tab-name"
+            onDoubleClick={(e) => {
+              e.stopPropagation()
+              beginEdit()
+            }}
+          >
+            {meta.name}
+          </span>
+        )}
+
+        {!editing && needsAttention && (
+          <span
+            className="tab-attention"
+            title="Waiting for you"
+            aria-label="Waiting for you"
+          />
+        )}
+
+        {!editing && (
+          <button
+            type="button"
+            className="tab-close"
+            title="Close session"
+            aria-label="Close session"
+            onClick={(e) => {
+              e.stopPropagation()
+              onRequestClose(id)
+            }}
+          >
+            {'×'}
+          </button>
+        )}
+      </div>
+
+      <div className="tab-row-stats">
+        <img
+          className="tab-agent-icon"
+          src={agentIcon(meta.agentId)}
+          alt=""
+          title={agentLabel(meta.agentId)}
+          draggable={false}
         />
-      )}
-
-      {!editing && (
-        <button
-          type="button"
-          className="tab-close"
-          title="Close session"
-          aria-label="Close session"
-          onClick={(e) => {
-            e.stopPropagation()
-            onRequestClose(id)
-          }}
-        >
-          {'×'}
-        </button>
-      )}
+        {hasStats ? (
+          <>
+            <span
+              className="tab-stat"
+              title={`Context: ${meta.contextTokens.toLocaleString()} / ${meta.contextWindow.toLocaleString()} tokens (${contextPct}%)`}
+            >
+              {formatTokens(meta.contextTokens)}/{formatTokens(meta.contextWindow)}
+            </span>
+            <span
+              className="tab-stat tab-stat-out"
+              title={`${meta.totalOutputTokens.toLocaleString()} output tokens this session`}
+            >
+              ↧{formatTokens(meta.totalOutputTokens)}
+            </span>
+          </>
+        ) : (
+          <span className="tab-stat tab-stat-muted" title={agentLabel(meta.agentId)}>
+            {agentLabel(meta.agentId)}
+          </span>
+        )}
+      </div>
     </div>
   )
 }

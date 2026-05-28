@@ -19,10 +19,12 @@ export const IPC = {
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
   CLIPBOARD_WRITE: 'clipboard:write',
+  OPEN_EXTERNAL: 'shell:open',
   // main -> renderer (webContents.send)
   PTY_DATA: 'pty:data',
   PTY_EXIT: 'pty:exit',
-  PTY_ATTENTION: 'pty:attention'
+  PTY_ATTENTION: 'pty:attention',
+  PTY_STATS: 'pty:stats'
 } as const
 
 // ---- PTY lifecycle ----------------------------------------------------------
@@ -36,6 +38,8 @@ export interface PtyCreateRequest {
   branch?: string
   /** Whether to run this session in a fresh git worktree (decided by the UI). */
   useWorktree?: boolean
+  /** Which agent to launch; falls back to the `defaultAgent` setting if absent. */
+  agentId?: string
 }
 
 export interface PtyCreateResult {
@@ -83,6 +87,17 @@ export interface PtyAttentionPayload {
   id: SessionId
   /** 'done' = turn finished (green), 'ask' = waiting for input/permission (yellow). */
   kind: 'ask' | 'done'
+}
+
+/** Per-session token usage, read from the agent's transcript (Claude only). */
+export interface PtyStatsPayload {
+  id: SessionId
+  /** Current context-window occupancy in tokens (last message's prompt side). */
+  contextTokens: number
+  /** Model context-window size in tokens. */
+  contextWindow: number
+  /** Cumulative output tokens generated this session. */
+  totalOutputTokens: number
 }
 
 // ---- Settings ---------------------------------------------------------------
@@ -135,6 +150,8 @@ export interface PersistedSession {
   name: string
   isManualName: boolean
   order: number
+  /** Agent this session runs. Optional for back-compat with older snapshots. */
+  agentId?: string
 }
 
 export interface SessionSnapshot {
@@ -162,6 +179,8 @@ export interface RendererApi {
   onPtyExit(cb: (payload: PtyExitPayload) => void): () => void
   /** Subscribe to hook-driven attention signals; returns an unsubscribe fn. */
   onPtyAttention(cb: (payload: PtyAttentionPayload) => void): () => void
+  /** Subscribe to per-session token-usage updates; returns an unsubscribe fn. */
+  onPtyStats(cb: (payload: PtyStatsPayload) => void): () => void
   getSettings(): Promise<AppSettings>
   setSettings(patch: Partial<AppSettings>): Promise<AppSettings>
   /** Open the OS folder picker; resolves to the chosen path or null. */
@@ -172,4 +191,6 @@ export interface RendererApi {
   writeClipboard(text: string): void
   /** Read text from the OS clipboard. */
   readClipboard(): Promise<string>
+  /** Open an http/https URL in the user's default browser (validated in main). */
+  openExternal(url: string): void
 }

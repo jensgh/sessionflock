@@ -51,6 +51,11 @@ function AppShell(): JSX.Element {
       state.setAttention(id, 'needs')
     })
 
+    // Per-session token usage, polled from the agent transcript in main.
+    const offStats = window.api.onPtyStats(({ id, contextTokens, contextWindow, totalOutputTokens }) => {
+      useSessionStore.getState().setStats(id, { contextTokens, contextWindow, totalOutputTokens })
+    })
+
     const offExit = window.api.onPtyExit(({ id, exitCode, signal }) => {
       const live = TerminalRegistry.get(id)
       if (live?.idleTimer) {
@@ -73,6 +78,7 @@ function AppShell(): JSX.Element {
     return () => {
       offData()
       offAttention()
+      offStats()
       offExit()
     }
   }, [])
@@ -99,6 +105,7 @@ function AppShell(): JSX.Element {
             cwd: persisted.cwd,
             name: persisted.name,
             isManualName: persisted.isManualName,
+            agentId: persisted.agentId,
             order: persisted.order,
             // Don't steal focus per-tab during restore; we set activeId below.
             activate: false,
@@ -132,7 +139,7 @@ function AppShell(): JSX.Element {
     const buildSnapshot = (): SessionSnapshot => {
       const state = useSessionStore.getState()
       const sessions: PersistedSession[] = state.order
-        .map((id, idx) => {
+        .map((id, idx): PersistedSession | null => {
           const meta = state.sessions[id]
           if (!meta) return null
           return {
@@ -140,6 +147,7 @@ function AppShell(): JSX.Element {
             cwd: meta.cwd,
             name: meta.name,
             isManualName: meta.isManualName,
+            agentId: meta.agentId,
             order: idx
           }
         })

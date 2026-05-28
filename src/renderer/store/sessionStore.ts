@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 import type { SessionId } from '@shared/ipc-types'
+import { DEFAULT_AGENT_ID } from '@shared/agents'
 
 export type SessionStatus = 'starting' | 'running' | 'exited'
 
@@ -28,10 +29,18 @@ export interface SessionMeta {
   autoName: string
   /** Once the user renames a tab, auto titles no longer overwrite `name`. */
   isManualName: boolean
+  /** Agent this session runs (drives the tab icon). */
+  agentId: string
   order: number
   status: SessionStatus
   attention: AttentionKind
   lastActivityAt: number
+  /** Current context-window occupancy in tokens (0 until first stats arrive). */
+  contextTokens: number
+  /** Model context-window size in tokens (0 = unknown). */
+  contextWindow: number
+  /** Cumulative output tokens generated this session. */
+  totalOutputTokens: number
 }
 
 export interface AddSessionInput {
@@ -39,6 +48,8 @@ export interface AddSessionInput {
   cwd: string
   name: string
   isManualName?: boolean
+  /** Agent this session runs; defaults to the built-in default agent. */
+  agentId?: string
   /** Explicit order; defaults to appending at the end. */
   order?: number
   status?: SessionStatus
@@ -57,6 +68,10 @@ interface SessionStoreState {
   setStatus: (id: SessionId, status: SessionStatus) => void
   markActivity: (id: SessionId) => void
   setAttention: (id: SessionId, kind: AttentionKind) => void
+  setStats: (
+    id: SessionId,
+    stats: { contextTokens: number; contextWindow: number; totalOutputTokens: number }
+  ) => void
   reorder: (order: SessionId[]) => void
 }
 
@@ -77,10 +92,14 @@ export const useSessionStore = create<SessionStoreState>()(
           name: input.name,
           autoName: input.name,
           isManualName: input.isManualName ?? false,
+          agentId: input.agentId ?? DEFAULT_AGENT_ID,
           order,
           status: input.status ?? 'starting',
           attention: 'none',
-          lastActivityAt: Date.now()
+          lastActivityAt: Date.now(),
+          contextTokens: 0,
+          contextWindow: 0,
+          totalOutputTokens: 0
         }
         return {
           sessions: { ...state.sessions, [input.id]: meta },
@@ -187,6 +206,22 @@ export const useSessionStore = create<SessionStoreState>()(
             ...state.sessions,
             [id]: { ...existing, attention: kind }
           }
+        }
+      }),
+
+    setStats: (id, stats) =>
+      set((state) => {
+        const existing = state.sessions[id]
+        if (!existing) return state
+        if (
+          existing.contextTokens === stats.contextTokens &&
+          existing.contextWindow === stats.contextWindow &&
+          existing.totalOutputTokens === stats.totalOutputTokens
+        ) {
+          return state // no change — skip the re-render
+        }
+        return {
+          sessions: { ...state.sessions, [id]: { ...existing, ...stats } }
         }
       }),
 

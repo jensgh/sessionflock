@@ -52,6 +52,8 @@ export interface CreateSessionInput {
   branch?: string
   /** Whether to run this session in a fresh git worktree. */
   useWorktree?: boolean
+  /** Agent to launch for this session; falls back to the default agent. */
+  agentId?: string
   theme: 'system' | 'light' | 'dark'
 }
 
@@ -75,6 +77,7 @@ export async function createSession(input: CreateSessionInput): Promise<SessionI
     cwd: input.cwd,
     name: fallbackName,
     isManualName: input.isManualName ?? false,
+    agentId: input.agentId,
     order: input.order,
     status: 'starting'
   })
@@ -98,7 +101,8 @@ export async function createSession(input: CreateSessionInput): Promise<SessionI
       cols,
       rows,
       branch: input.branch,
-      useWorktree: input.useWorktree
+      useWorktree: input.useWorktree,
+      agentId: input.agentId
     })
     if (res.ok) {
       useSessionStore.getState().setStatus(id, 'running')

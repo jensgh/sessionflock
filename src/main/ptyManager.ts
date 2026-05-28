@@ -26,6 +26,7 @@ import {
 import { getAgent } from './agents/index.js'
 import { getSettings } from './settings/settingsStore.js'
 import { prepareSessionCwd } from './worktree.js'
+import { readUsage } from './stats/usageReader.js'
 
 // --- Backpressure tuning -----------------------------------------------------
 // Claude can emit huge bursts of output (e.g. long tool results, file dumps).
@@ -42,11 +43,16 @@ const DEBUG = process.env.SFLOCK_DEBUG === '1'
 // (e.g. Claude's Stop/Notification); we watch the file and forward PTY_ATTENTION.
 const EVENTS_DIR = join(tmpdir(), 'sessionflock-events')
 
+// How often to re-read transcripts for token-usage stats.
+const STATS_INTERVAL_MS = 4000
+
 /** Callback the host (index.ts) injects to deliver messages to the renderer. */
 type SendFn = (channel: string, payload: unknown) => void
 
 interface Session {
   pty: IPty
+  /** Resolved working directory the agent runs in (used to find its transcript). */
+  cwd: string
   /** Pending output chunks awaiting the next flush. */
   buffer: string[]
   /** Active flush timer, or null when idle. */
@@ -57,10 +63,13 @@ interface Session {
   watcher: FSWatcher | null
   /** Bytes of the event file already consumed. */
   eventOffset: number
+  /** Last stats pushed to the renderer, to suppress redundant sends. */
+  lastStats: string | null
 }
 
 export class PtyManager {
   private readonly sessions = new Map<SessionId, Session>()
+  private statsTimer: NodeJS.Timeout | null = null
 
   constructor(private readonly send: SendFn) {}
 
@@ -79,7 +88,9 @@ export class PtyManager {
     }
 
     const settings = getSettings()
-    const agent = getAgent(settings.defaultAgent)
+    // Prefer the session's own agent; fall back to the current default for
+    // sessions created before per-session agents (or restored old snapshots).
+    const agent = getAgent(req.agentId ?? settings.defaultAgent)
 
     let bin: string
     let args: string[]
@@ -131,14 +142,17 @@ export class PtyManager {
 
     const session: Session = {
       pty: child,
+      cwd: resolved.cwd,
       buffer: [],
       timer: null,
       eventFile,
       watcher: null,
-      eventOffset: 0
+      eventOffset: 0,
+      lastStats: null
     }
     this.sessions.set(req.id, session)
     this.watchEvents(req.id, session)
+    this.ensureStatsTimer()
 
     child.onData((data) => {
       session.buffer.push(data)
@@ -154,6 +168,7 @@ export class PtyManager {
       this.clearTimer(session)
       this.cleanupEvents(session)
       this.sessions.delete(req.id)
+      this.maybeStopStatsTimer()
       this.send(IPC.PTY_EXIT, { id: req.id, exitCode, signal })
     })
 
@@ -186,6 +201,7 @@ export class PtyManager {
     this.cleanupEvents(session)
     session.buffer.length = 0
     this.sessions.delete(id)
+    this.maybeStopStatsTimer()
     try {
       session.pty.kill()
     } catch {
@@ -230,6 +246,41 @@ export class PtyManager {
     if (session.timer !== null) {
       clearTimeout(session.timer)
       session.timer = null
+    }
+  }
+
+  // --- Token-usage stats -----------------------------------------------------
+  /** Start the shared stats poll loop if it isn't already running. */
+  private ensureStatsTimer(): void {
+    if (this.statsTimer !== null) return
+    this.statsTimer = setInterval(() => this.pollStats(), STATS_INTERVAL_MS)
+    // Don't keep the event loop alive just for stats.
+    this.statsTimer.unref?.()
+  }
+
+  /** Stop polling when no sessions remain. */
+  private maybeStopStatsTimer(): void {
+    if (this.sessions.size === 0 && this.statsTimer !== null) {
+      clearInterval(this.statsTimer)
+      this.statsTimer = null
+    }
+  }
+
+  /** Read each session's transcript and push changed token-usage stats. */
+  private pollStats(): void {
+    for (const [id, session] of this.sessions) {
+      const usage = readUsage(session.cwd)
+      if (!usage) continue
+      const payload = {
+        id,
+        contextTokens: usage.contextTokens,
+        contextWindow: usage.contextWindow,
+        totalOutputTokens: usage.totalOutputTokens
+      }
+      const sig = `${payload.contextTokens}/${payload.contextWindow}/${payload.totalOutputTokens}`
+      if (sig === session.lastStats) continue // unchanged — skip the IPC
+      session.lastStats = sig
+      this.send(IPC.PTY_STATS, payload)
     }
   }
 

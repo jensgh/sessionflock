@@ -29,15 +29,17 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #ffffff;
-  --bg-elevated: #f3f3f3;
-  --bg-rail: #ececec;
-  --bg-hover: #e2e2e2;
-  --bg-active: #d6d6d6;
-  --fg: #333333;
-  --fg-muted: #555555;
-  --fg-dim: #999999;
-  --border: #cccccc;
+  /* "Warm paper": layered off-white surfaces (rail < app < elevated) with a
+     warm grey ink, so panes read as distinct depths instead of a flat sheet. */
+  --bg: #faf8f5;
+  --bg-elevated: #fffdfa;
+  --bg-rail: #f0ece5;
+  --bg-hover: #e9e3da;
+  --bg-active: #ded6ca;
+  --fg: #2b2722;
+  --fg-muted: #6b6258;
+  --fg-dim: #9a9086;
+  --border: #e0d8cc;
   --accent: #0066b8;
   --accent-hover: #0078d4;
   --accent-fg: #ffffff;
@@ -174,13 +176,44 @@ body {
 
 .tab-item {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 7px 10px;
   border-radius: 4px;
   cursor: pointer;
   color: var(--fg-muted);
-  min-height: 30px;
+}
+
+.tab-row-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 20px;
+}
+
+.tab-row-stats {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-left: 1px;
+}
+
+.tab-stat {
+  font-size: 11px;
+  line-height: 1;
+  color: var(--fg-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tab-stat-out {
+  opacity: 0.85;
+}
+
+.tab-stat-muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tab-item:hover {
@@ -196,6 +229,16 @@ body {
   flex: 0 0 auto;
   font-size: 10px;
   line-height: 1;
+}
+
+.tab-agent-icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  object-fit: contain;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tab-status-running {

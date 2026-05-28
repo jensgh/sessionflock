@@ -5,6 +5,7 @@ import {
   type PtyCreateRequest,
   type PtyCreateResponse,
   type PtyAttentionPayload,
+  type PtyStatsPayload,
   type PtyDataPayload,
   type PtyExitPayload,
   type PtyKillPayload,
@@ -52,6 +53,13 @@ const api: RendererApi = {
     return () => ipcRenderer.removeListener(IPC.PTY_ATTENTION, listener)
   },
 
+  onPtyStats: (cb: (payload: PtyStatsPayload) => void): (() => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, payload: PtyStatsPayload): void =>
+      cb(payload)
+    ipcRenderer.on(IPC.PTY_STATS, listener)
+    return () => ipcRenderer.removeListener(IPC.PTY_STATS, listener)
+  },
+
   getSettings: (): Promise<AppSettings> => ipcRenderer.invoke(IPC.SETTINGS_GET),
 
   setSettings: (patch: Partial<AppSettings>): Promise<AppSettings> =>
@@ -69,7 +77,11 @@ const api: RendererApi = {
     ipcRenderer.send(IPC.CLIPBOARD_WRITE, text)
   },
 
-  readClipboard: (): Promise<string> => ipcRenderer.invoke(IPC.CLIPBOARD_READ)
+  readClipboard: (): Promise<string> => ipcRenderer.invoke(IPC.CLIPBOARD_READ),
+
+  openExternal: (url: string): void => {
+    ipcRenderer.send(IPC.OPEN_EXTERNAL, url)
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)

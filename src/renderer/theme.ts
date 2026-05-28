@@ -57,10 +57,11 @@ export function xtermTheme(resolved: ResolvedTheme): ITheme {
     }
   }
   return {
-    background: '#ffffff',
-    foreground: '#333333',
-    cursor: '#333333',
-    cursorAccent: '#ffffff',
+    // Warm-paper light theme — kept in sync with styles.css light tokens.
+    background: '#fbf9f6',
+    foreground: '#2b2722',
+    cursor: '#2b2722',
+    cursorAccent: '#fbf9f6',
     selectionBackground: '#add6ff',
     black: '#000000',
     red: '#cd3131',
