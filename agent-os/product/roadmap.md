@@ -60,10 +60,9 @@ Linux (Ubuntu) and macOS.
   (Fires only when the app window is unfocused; toggle in Settings; click focuses session.)
 - **Show Md files** — Show MD files this session has in use, 
   user can choose if he wants to show the list or not on the right side of the screen.
-- **Different colors of action needed in dot notification** — Green notification when task is finished
-  , Yellow for a answer
-  (deferred during the `2026-05-28-1849` spec; the `ask`/`done` signal already arrives
-  over IPC but is collapsed to one "needs you" state in the UI.)
+- ✅ **Different colors of action needed in dot notification** — Green when the task is
+  finished, amber when it's waiting for an answer (blue for a generic bell/idle hint).
+  The precise `ask`/`done` hook signal now drives the tab-dot color.
 - ✅ **Agent icon in the tab** — Show the icon of the agent in the tab
   (spec `2026-05-28-1849-tab-ux-links-agent-icon`; agent persisted per-session).
 

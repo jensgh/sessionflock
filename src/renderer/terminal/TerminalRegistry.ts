@@ -76,6 +76,8 @@ class Registry {
       const meta = state.sessions[id]
       if (!meta || meta.status !== 'running') return
       if (state.activeId === id) return
+      // Generic bell: don't downgrade a precise 'ask'/'done' hook signal.
+      if (meta.attention === 'ask' || meta.attention === 'done') return
       state.setAttention(id, 'needs')
     })
     disposers.push(() => onBell.dispose())

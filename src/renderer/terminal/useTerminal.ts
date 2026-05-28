@@ -27,6 +27,8 @@ export function scheduleNeedsInput(id: SessionId, idleMs: number): void {
     // Only flag if the session still exists, is running, and is not focused.
     if (!meta || meta.status !== 'running') return
     if (state.activeId === id) return
+    // Idle fallback is generic — never downgrade a precise 'ask'/'done' signal.
+    if (meta.attention === 'ask' || meta.attention === 'done') return
     state.setAttention(id, 'needs')
   }, idleMs)
 }

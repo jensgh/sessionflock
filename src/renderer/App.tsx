@@ -87,7 +87,8 @@ function AppShell(): JSX.Element {
       const meta = state.sessions[id]
       if (!meta || meta.status !== 'running') return
       if (state.activeId === id) return
-      state.setAttention(id, 'needs')
+      // Precise signal from the hook: 'done' (green) or 'ask' (amber).
+      state.setAttention(id, kind)
       // Desktop notification only when the app isn't focused — when it is, the
       // in-app tab dot is enough and an OS popup would be noise.
       if (notifyRef.current && !document.hasFocus()) {

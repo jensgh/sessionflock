@@ -12,7 +12,15 @@ export type SessionStatus = 'starting' | 'running' | 'exited'
  * the Stop/Notification hooks, the terminal bell, or the idle fallback — whichever
  * fires first — and cleared when the user focuses the tab or types into it.
  */
-export type AttentionKind = 'none' | 'needs'
+/**
+ * 'none'  — nothing pending.
+ * 'done'  — agent finished its turn (green).
+ * 'ask'   — agent is waiting for input/permission (amber).
+ * 'needs' — generic attention from the terminal bell or idle fallback (blue),
+ *           when we don't have a precise 'ask'/'done' signal.
+ * A generic 'needs' never downgrades a precise 'ask'/'done' already set.
+ */
+export type AttentionKind = 'none' | 'needs' | 'ask' | 'done'
 
 /**
  * Serializable session METADATA only. Live xterm `Terminal` objects never live

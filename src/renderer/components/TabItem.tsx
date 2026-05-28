@@ -37,7 +37,19 @@ export function TabItem({ id, onRequestClose }: TabItemProps): JSX.Element | nul
   if (!meta) return null
 
   // The active tab never shows an indicator (you're already looking at it).
-  const needsAttention = !isActive && meta.attention === 'needs'
+  const needsAttention = !isActive && meta.attention !== 'none'
+  const attentionClass =
+    meta.attention === 'done'
+      ? 'tab-attention-done'
+      : meta.attention === 'ask'
+        ? 'tab-attention-ask'
+        : 'tab-attention-generic'
+  const attentionTitle =
+    meta.attention === 'done'
+      ? 'Finished its turn'
+      : meta.attention === 'ask'
+        ? 'Waiting for your input'
+        : 'Wants your attention'
 
   const beginEdit = (): void => {
     setDraft(meta.name)
@@ -107,9 +119,9 @@ export function TabItem({ id, onRequestClose }: TabItemProps): JSX.Element | nul
 
         {!editing && needsAttention && (
           <span
-            className="tab-attention"
-            title="Waiting for you"
-            aria-label="Waiting for you"
+            className={`tab-attention ${attentionClass}`}
+            title={attentionTitle}
+            aria-label={attentionTitle}
           />
         )}
 

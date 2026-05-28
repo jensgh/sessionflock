@@ -468,8 +468,23 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--needs-input);
-  box-shadow: 0 0 4px var(--needs-input);
+  background: var(--attn-generic);
+  box-shadow: 0 0 4px var(--attn-generic);
+}
+
+.tab-attention-done {
+  background: var(--attn-done);
+  box-shadow: 0 0 4px var(--attn-done);
+}
+
+.tab-attention-ask {
+  background: var(--attn-ask);
+  box-shadow: 0 0 4px var(--attn-ask);
+}
+
+.tab-attention-generic {
+  background: var(--attn-generic);
+  box-shadow: 0 0 4px var(--attn-generic);
 }
 
 .tab-close {
