@@ -96,8 +96,6 @@ export interface PtyStatsPayload {
   contextTokens: number
   /** Model context-window size in tokens. */
   contextWindow: number
-  /** Cumulative output tokens generated this session. */
-  totalOutputTokens: number
 }
 
 // ---- Settings ---------------------------------------------------------------

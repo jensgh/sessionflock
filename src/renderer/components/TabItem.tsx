@@ -144,20 +144,12 @@ export function TabItem({ id, onRequestClose }: TabItemProps): JSX.Element | nul
           draggable={false}
         />
         {hasStats ? (
-          <>
-            <span
-              className="tab-stat"
-              title={`Context: ${meta.contextTokens.toLocaleString()} / ${meta.contextWindow.toLocaleString()} tokens (${contextPct}%)`}
-            >
-              {formatTokens(meta.contextTokens)}/{formatTokens(meta.contextWindow)}
-            </span>
-            <span
-              className="tab-stat tab-stat-out"
-              title={`${meta.totalOutputTokens.toLocaleString()} output tokens this session`}
-            >
-              ↧{formatTokens(meta.totalOutputTokens)}
-            </span>
-          </>
+          <span
+            className="tab-stat"
+            title={`Context window: ${meta.contextTokens.toLocaleString()} / ${meta.contextWindow.toLocaleString()} tokens used (${contextPct}%)`}
+          >
+            {formatTokens(meta.contextTokens)} / {formatTokens(meta.contextWindow)} · {contextPct}%
+          </span>
         ) : (
           <span className="tab-stat tab-stat-muted" title={agentLabel(meta.agentId)}>
             {agentLabel(meta.agentId)}

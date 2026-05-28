@@ -207,10 +207,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.tab-stat-out {
-  opacity: 0.85;
-}
-
 .tab-stat-muted {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -7,7 +7,8 @@
 // main process knows) and derive:
 //   - contextTokens: the LAST message's input + cache tokens = current context fill
 //   - totalOutputTokens: cumulative output tokens generated this session
-// This is Claude-specific; other agents simply report no stats.
+// We report the LIVE context fill for the session (how full the window is right
+// now), not cumulative totals. This is Claude-specific; other agents report none.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -56,7 +57,6 @@ function contextWindowFor(contextTokens: number): number {
 export interface UsageStats {
   contextTokens: number
   contextWindow: number
-  totalOutputTokens: number
   model: string | null
 }
 
@@ -72,7 +72,6 @@ export function readUsage(cwd: string): UsageStats | null {
     return null
   }
 
-  let totalOutputTokens = 0
   let contextTokens = 0
   let model: string | null = null
 
@@ -87,7 +86,6 @@ export function readUsage(cwd: string): UsageStats | null {
     }
     const u = obj.message?.usage
     if (!u) continue
-    if (typeof u.output_tokens === 'number') totalOutputTokens += u.output_tokens
     // Current context occupancy = the most recent message's prompt-side tokens.
     const ctx =
       (u.input_tokens ?? 0) +
@@ -100,7 +98,6 @@ export function readUsage(cwd: string): UsageStats | null {
   return {
     contextTokens,
     contextWindow: contextWindowFor(contextTokens),
-    totalOutputTokens,
     model
   }
 }

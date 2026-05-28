@@ -39,8 +39,6 @@ export interface SessionMeta {
   contextTokens: number
   /** Model context-window size in tokens (0 = unknown). */
   contextWindow: number
-  /** Cumulative output tokens generated this session. */
-  totalOutputTokens: number
 }
 
 export interface AddSessionInput {
@@ -68,10 +66,7 @@ interface SessionStoreState {
   setStatus: (id: SessionId, status: SessionStatus) => void
   markActivity: (id: SessionId) => void
   setAttention: (id: SessionId, kind: AttentionKind) => void
-  setStats: (
-    id: SessionId,
-    stats: { contextTokens: number; contextWindow: number; totalOutputTokens: number }
-  ) => void
+  setStats: (id: SessionId, stats: { contextTokens: number; contextWindow: number }) => void
   reorder: (order: SessionId[]) => void
 }
 
@@ -98,8 +93,7 @@ export const useSessionStore = create<SessionStoreState>()(
           attention: 'none',
           lastActivityAt: Date.now(),
           contextTokens: 0,
-          contextWindow: 0,
-          totalOutputTokens: 0
+          contextWindow: 0
         }
         return {
           sessions: { ...state.sessions, [input.id]: meta },
@@ -215,8 +209,7 @@ export const useSessionStore = create<SessionStoreState>()(
         if (!existing) return state
         if (
           existing.contextTokens === stats.contextTokens &&
-          existing.contextWindow === stats.contextWindow &&
-          existing.totalOutputTokens === stats.totalOutputTokens
+          existing.contextWindow === stats.contextWindow
         ) {
           return state // no change — skip the re-render
         }
