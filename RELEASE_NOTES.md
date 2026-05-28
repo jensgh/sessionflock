@@ -1,7 +1,10 @@
 A cross-platform desktop workspace for running and managing many **terminal AI-agent sessions** at once — each in its own embedded terminal tab. Agent-agnostic, with **Claude Code** supported out of the box.
 
-## New in 0.2.0
+## New in 0.2
 
+- **Windows installer (beta)** — a `.exe` (NSIS) is now produced. The core workspace
+  works on Windows; hook-driven features (precise done/ask dot, per-session token stats,
+  plan-usage meter, auto-name) are not available on Windows yet.
 - **Clickable links** — URLs printed in the terminal open in your default browser.
 - **Agent icon per tab** — each tab shows the agent it's running.
 - **Per-session usage** — each tab shows its context-window fill; a top-bar meter shows the Claude icon + your **5-hour plan usage**, expandable to **5h / 7-day** plan windows plus the active session's model and context.
@@ -28,6 +31,7 @@ A cross-platform desktop workspace for running and managing many **terminal AI-a
 ## Install
 
 - **Linux** — `.AppImage` (mark executable and run) or `.deb`.
+- **Windows** — `.exe` (NSIS) *(beta — see note above)*. Unsigned, so SmartScreen may warn: **More info → Run anyway**.
 - **macOS (Apple Silicon / M1+)** — `.dmg`. Unsigned for now, so on first launch use right-click → **Open**.
 
 Requires the agent's CLI on your PATH — for Claude Code, the `claude` binary (auto-detected; path configurable in Settings).

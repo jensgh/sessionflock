@@ -1,6 +1,6 @@
 {
   "name": "sessionflock",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "productName": "Sessionflock",
   "description": "A desktop workspace for managing many terminal AI-agent sessions, each in its own tab. Agent-agnostic, with Claude Code supported out of the box.",
   "type": "module",
