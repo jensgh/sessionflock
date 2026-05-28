@@ -11,6 +11,7 @@ import { TopBar } from './components/TopBar'
 import { TabRail } from './components/TabRail'
 import { TerminalPane } from './components/TerminalPane'
 import { SearchOverlay } from './components/SearchOverlay'
+import { MdPanel } from './components/MdPanel'
 
 const PERSIST_DEBOUNCE_MS = 500
 
@@ -46,6 +47,7 @@ function AppShell(): JSX.Element {
   // Keep the latest idle threshold available to the (long-lived) data handler
   // without re-subscribing it on every settings change.
   const [searchOpen, setSearchOpen] = useState(false)
+  const [mdPanelOpen, setMdPanelOpen] = useState(false)
   const idleMsRef = useRef(settings?.needsInputIdleMs ?? 1500)
   const notifyRef = useRef(settings?.desktopNotifications ?? true)
 
@@ -250,10 +252,15 @@ function AppShell(): JSX.Element {
 
   return (
     <div className="app-root">
-      <TopBar onOpenSearch={() => setSearchOpen(true)} />
+      <TopBar
+        onOpenSearch={() => setSearchOpen(true)}
+        mdPanelOpen={mdPanelOpen}
+        onToggleMdPanel={() => setMdPanelOpen((o) => !o)}
+      />
       <div className="app-body">
         <TabRail />
         <TerminalPane />
+        {mdPanelOpen && <MdPanel onClose={() => setMdPanelOpen(false)} />}
       </div>
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>

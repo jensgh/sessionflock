@@ -58,8 +58,10 @@ Linux (Ubuntu) and macOS.
 - ✅ **Desktop notifications (candidate)** — OS-level notifications when a session
   needs input or finishes, complementing the in-app tab indicator.
   (Fires only when the app window is unfocused; toggle in Settings; click focuses session.)
-- **Show Md files** — Show MD files this session has in use, 
-  user can choose if he wants to show the list or not on the right side of the screen.
+- ✅ **Show Md files** — optional right-side panel listing the markdown files in the
+  active session's folder; toggle it from the top bar; click a file to open it in the
+  OS default app. (v1 lists the folder's .md files; "only what the agent touched" could
+  refine it later.)
 - ✅ **Different colors of action needed in dot notification** — Green when the task is
   finished, amber when it's waiting for an answer (blue for a generic bell/idle hint).
   The precise `ask`/`done` hook signal now drives the tab-dot color.

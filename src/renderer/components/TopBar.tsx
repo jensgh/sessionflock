@@ -5,8 +5,14 @@ import { SettingsModal } from './SettingsModal'
 import { PromptModal } from './PromptModal'
 import { UsageMeter } from './UsageMeter'
 
-/** Top bar: New Session split-button (left), usage meter + search + Settings (right). */
-export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }): JSX.Element {
+interface TopBarProps {
+  onOpenSearch: () => void
+  mdPanelOpen: boolean
+  onToggleMdPanel: () => void
+}
+
+/** Top bar: New Session + usage (left); search, MD panel, Settings (right). */
+export function TopBar({ onOpenSearch, mdPanelOpen, onToggleMdPanel }: TopBarProps): JSX.Element {
   const { settings } = useSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -95,6 +101,17 @@ export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }): JSX.Elem
         aria-label="Search sessions"
       >
         <span aria-hidden="true">⌕</span>
+      </button>
+
+      <button
+        type="button"
+        className={`btn btn-icon md-toggle-btn${mdPanelOpen ? ' btn-active' : ''}`}
+        onClick={onToggleMdPanel}
+        title="Toggle markdown files panel"
+        aria-label="Toggle markdown files panel"
+        aria-pressed={mdPanelOpen}
+      >
+        <span aria-hidden="true">❡</span>
       </button>
 
       <button

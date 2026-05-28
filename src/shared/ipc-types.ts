@@ -17,10 +17,12 @@ export const IPC = {
   SESSIONS_SAVE: 'sessions:save',
   CLIPBOARD_READ: 'clipboard:read',
   USAGE_ACCOUNT: 'usage:account',
+  MD_LIST: 'md:list',
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
   CLIPBOARD_WRITE: 'clipboard:write',
   OPEN_EXTERNAL: 'shell:open',
+  OPEN_PATH: 'shell:openPath',
   WINDOW_FOCUS: 'window:focus',
   // main -> renderer (webContents.send)
   PTY_DATA: 'pty:data',
@@ -89,6 +91,14 @@ export interface PtyAttentionPayload {
   id: SessionId
   /** 'done' = turn finished (green), 'ask' = waiting for input/permission (yellow). */
   kind: 'ask' | 'done'
+}
+
+/** A markdown file found under a session's folder. */
+export interface MdFile {
+  /** Path relative to the session folder, for display. */
+  rel: string
+  /** Absolute path, for opening. */
+  abs: string
 }
 
 /** claude.ai subscription usage (rate-limit windows), from the OAuth usage API. */
@@ -210,4 +220,8 @@ export interface RendererApi {
   focusWindow(): void
   /** claude.ai subscription usage (5h/7d windows); null if unavailable. */
   getAccountUsage(): Promise<AccountUsage | null>
+  /** List markdown files under a session folder (relative + absolute paths). */
+  listMarkdownFiles(dir: string): Promise<MdFile[]>
+  /** Open a local file/folder in the OS default application. */
+  openPath(absPath: string): void
 }

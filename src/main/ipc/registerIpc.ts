@@ -18,6 +18,8 @@ import { pickFolder } from '../dialogs.js'
 import { getSettings, setSettings } from '../settings/settingsStore.js'
 import { loadSnapshot, saveSnapshot } from '../persistence/sessionStore.js'
 import { getAccountUsage } from '../stats/accountUsage.js'
+import { listMarkdown } from '../mdFiles.js'
+import { existsSync } from 'node:fs'
 
 export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
   // --- PTY lifecycle ---------------------------------------------------------
@@ -66,6 +68,16 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
 
   // --- Account usage (claude.ai 5h/7d rate-limit windows) --------------------
   ipcMain.handle(IPC.USAGE_ACCOUNT, () => getAccountUsage())
+
+  // --- Markdown files panel --------------------------------------------------
+  ipcMain.handle(IPC.MD_LIST, (_e, dir: string) =>
+    typeof dir === 'string' && existsSync(dir) ? listMarkdown(dir) : []
+  )
+
+  // Open a local file/folder in the OS default app (e.g. a markdown viewer).
+  ipcMain.on(IPC.OPEN_PATH, (_e, p: string) => {
+    if (typeof p === 'string' && existsSync(p)) void shell.openPath(p)
+  })
 
   // --- Open external links ---------------------------------------------------
   // The renderer hands us URLs clicked in a terminal. Only ever open http/https:
