@@ -1,5 +1,12 @@
 A cross-platform desktop workspace for running and managing many **terminal AI-agent sessions** at once — each in its own embedded terminal tab. Agent-agnostic, with **Claude Code** supported out of the box.
 
+## New in 0.3
+
+- **Windows feature parity (beta)** — the hook-driven features (done/ask dot colour,
+  per-session token stats, the usage meter's session context, and auto-name) are now
+  wired up on Windows via PowerShell hooks. **Beta / please report issues** — this hasn't
+  yet been verified on a real Windows machine. macOS and Linux are unchanged.
+
 ## New in 0.2
 
 - **Windows installer (beta)** — a `.exe` (NSIS) is now produced. The core workspace

@@ -333,7 +333,8 @@ export class PtyManager {
     const fresh = content.slice(session.eventOffset)
     session.eventOffset = content.length
     for (const raw of fresh.split('\n')) {
-      const line = raw.trim()
+      // Strip a leading BOM too — PowerShell's utf8 writer (Windows hooks) adds one.
+      const line = raw.replace(/^﻿/, '').trim()
       if (!line) continue
       if (DEBUG) console.log(`[csm-debug] ${id.slice(0, 8)} event: ${line}`)
       if (line === 'done' || line === 'ask') {

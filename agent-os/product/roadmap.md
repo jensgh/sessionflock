@@ -78,11 +78,10 @@ Linux (Ubuntu) and macOS.
   - ✅ **Core runtime (untested on Windows):** ConPTY via node-pty; Windows PATH /
     `claude.cmd`/`.exe` resolution; `.cmd` launched through `cmd.exe`; worktree, copy/
     paste, search, links, themes, persistence, auto-update are platform-neutral.
-  - ⏳ **Deferred (hook-dependent):** precise done/ask dot colour, per-session token
-    stats + usage meter, and auto-name — these use POSIX-shell hooks (`cat`/`printf`/
-    `$VAR`) that don't run in Windows `cmd`, so they're off on Windows. Generic
-    attention still works via the terminal bell.
-  - **For full parity, still needed:** Windows-compatible hook commands (cmd or
-    PowerShell) to append the event marker and capture the hook JSON / `transcript_path`
-    into the per-session files; the Windows location of Claude's credentials for the
-    plan-usage meter; and **runtime testing on a real Windows machine**.
+  - 🧪 **Hook-driven features (beta, unverified on Windows):** the done/ask dot, per-
+    session token stats + usage meter, and auto-name now run their hooks as **PowerShell**
+    via `-EncodedCommand`, with the settings delivered as a temp file (`--settings <path>`)
+    to dodge `cmd` quoting. Implemented but **not yet tested on a real Windows machine.**
+  - **Still to confirm/finish:** runtime testing on Windows 10/11 (hooks fire, ConPTY
+    drives `claude.cmd` via `cmd.exe`, PowerShell utf8/BOM round-trips); and the Windows
+    location of Claude's credentials for the plan-usage meter (file vs Credential Manager).
