@@ -72,6 +72,17 @@ Linux (Ubuntu) and macOS.
 - **Session management** — list/browse the agent's existing sessions (Claude:
   `~/.claude`), preview them, and resume (`claude --resume`). Moved out of the MVP
   as too large.
-- **Windows support** — extend PTY and git-worktree handling to Windows
-  (node-pty's ConPTY backend); plus nsis packaging in the release workflow. Moved
-  from Phase 2 — needs a Windows build/test environment.
+- **Windows support** — *in progress.*
+  - ✅ **Packaging:** nsis target + `windows-latest` in the release matrix; a tagged
+    release builds and attaches `Sessionflock-<v>-setup.exe` (CI-verified).
+  - ✅ **Core runtime (untested on Windows):** ConPTY via node-pty; Windows PATH /
+    `claude.cmd`/`.exe` resolution; `.cmd` launched through `cmd.exe`; worktree, copy/
+    paste, search, links, themes, persistence, auto-update are platform-neutral.
+  - ⏳ **Deferred (hook-dependent):** precise done/ask dot colour, per-session token
+    stats + usage meter, and auto-name — these use POSIX-shell hooks (`cat`/`printf`/
+    `$VAR`) that don't run in Windows `cmd`, so they're off on Windows. Generic
+    attention still works via the terminal bell.
+  - **For full parity, still needed:** Windows-compatible hook commands (cmd or
+    PowerShell) to append the event marker and capture the hook JSON / `transcript_path`
+    into the per-session files; the Windows location of Claude's credentials for the
+    plan-usage meter; and **runtime testing on a real Windows machine**.

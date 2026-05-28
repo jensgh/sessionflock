@@ -37,6 +37,12 @@ mac:
   # No signing identity in CI yet — produce an unsigned build.
   identity: null
 
+win:
+  # Single-file NSIS installer (unsigned for now). Icon is derived from
+  # build/icon.png. node-pty uses ConPTY on Windows 10+ (rebuilt via npmRebuild).
+  target:
+    - nsis
+
 publish:
   provider: github
   owner: jensgh

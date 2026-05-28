@@ -2,12 +2,18 @@
 // GUI apps on macOS/Linux inherit a minimal PATH (not the user's login-shell
 // PATH), so we resolve the real interactive PATH by running the login shell once.
 // Results are memoized — only worth doing once per process.
+//
+// Windows: there's no POSIX login shell, the PATH separator differs, and the
+// binary is a `claude.cmd`/`.exe` shim. The lifecycle hooks (POSIX shell) are
+// deferred on Windows, so we launch plain `claude` there — see resolveLaunch.
 
 import { execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import type { AgentDefinition, AgentLaunch } from './types.js'
+
+const isWindows = process.platform === 'win32'
 
 let cachedLoginPath: string | undefined
 let cachedClaude: { explicit: string | null | undefined; result: string | null } | undefined
@@ -18,6 +24,12 @@ let cachedClaude: { explicit: string | null | undefined; result: string | null }
  */
 function resolveLoginShellPath(): string {
   if (cachedLoginPath !== undefined) return cachedLoginPath
+
+  // Windows has no POSIX login shell — the process PATH is what we have.
+  if (isWindows) {
+    cachedLoginPath = process.env.PATH || ''
+    return cachedLoginPath
+  }
 
   const shell = process.env.SHELL || '/bin/bash'
   try {
@@ -38,7 +50,7 @@ function resolveLoginShellPath(): string {
 
 /** Merge the login-shell PATH with the current process PATH (dedup, order-preserving). */
 function mergedPath(): string {
-  const sep = ':'
+  const sep = delimiter // ':' on POSIX, ';' on Windows
   const parts: string[] = []
   const seen = new Set<string>()
   for (const chunk of [resolveLoginShellPath(), process.env.PATH || '']) {
@@ -52,12 +64,14 @@ function mergedPath(): string {
   return parts.join(sep)
 }
 
-/** Search a PATH string for an executable named `claude`. */
-function searchPathFor(name: string, pathStr: string): string | null {
-  for (const dir of pathStr.split(':')) {
+/** Search a PATH string for the first existing executable among `names`. */
+function searchPathFor(names: string[], pathStr: string): string | null {
+  for (const dir of pathStr.split(delimiter)) {
     if (!dir) continue
-    const candidate = join(dir, name)
-    if (existsSync(candidate)) return candidate
+    for (const name of names) {
+      const candidate = join(dir, name)
+      if (existsSync(candidate)) return candidate
+    }
   }
   return null
 }
@@ -73,15 +87,21 @@ function findClaude(explicit?: string | null): string | null {
   if (explicit && existsSync(explicit)) {
     result = explicit
   } else {
-    result = searchPathFor('claude', mergedPath())
+    const names = isWindows
+      ? ['claude.cmd', 'claude.exe', 'claude.bat', 'claude']
+      : ['claude']
+    result = searchPathFor(names, mergedPath())
     if (!result) {
       const home = homedir()
-      const probes = [
-        join(home, '.local', 'bin', 'claude'),
-        join(home, '.claude', 'local', 'claude'),
-        '/usr/local/bin/claude',
-        '/opt/homebrew/bin/claude'
-      ]
+      const appData = process.env.APPDATA || join(home, 'AppData', 'Roaming')
+      const probes = isWindows
+        ? [join(appData, 'npm', 'claude.cmd'), join(appData, 'npm', 'claude.exe')]
+        : [
+            join(home, '.local', 'bin', 'claude'),
+            join(home, '.claude', 'local', 'claude'),
+            '/usr/local/bin/claude',
+            '/opt/homebrew/bin/claude'
+          ]
       for (const p of probes) {
         if (existsSync(p)) {
           result = p
@@ -168,6 +188,15 @@ export const claudeAgent: AgentDefinition = {
     const bin = findClaude(explicitPath)
     if (!bin) {
       throw new Error('Could not find the `claude` binary. Set its path in Settings.')
+    }
+    if (isWindows) {
+      // Hooks are POSIX-shell and deferred on Windows, so launch plain `claude`
+      // (the terminal still works; precise dot/stats/auto-name are off). ConPTY
+      // can't exec a .cmd/.bat shim directly — route those through cmd.exe.
+      if (/\.(cmd|bat)$/i.test(bin)) {
+        return { bin: process.env.ComSpec || 'cmd.exe', args: ['/c', bin] }
+      }
+      return { bin, args: [] }
     }
     return { bin, args: ['--settings', SESSION_SETTINGS] }
   }
