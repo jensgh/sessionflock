@@ -51,8 +51,6 @@ Linux (Ubuntu) and macOS.
   show how many tokens that session has used and its context-window size/fill.
   (spec `2026-05-28-1849`; read from Claude transcripts. The top-bar usage stat from
   "Show agent usage stats" is still pending.)
-- **Windows support** — extend PTY and git-worktree handling to Windows
-  (node-pty's ConPTY backend).
 - ✅ **Search across sessions** — full-text search over session titles and contents.
   (Ctrl/Cmd+Shift+F overlay; searches titles + terminal scrollback; click to activate.)
 - ✅ **Desktop notifications (candidate)** — OS-level notifications when a session
@@ -73,3 +71,6 @@ Linux (Ubuntu) and macOS.
 - **Session management** — list/browse the agent's existing sessions (Claude:
   `~/.claude`), preview them, and resume (`claude --resume`). Moved out of the MVP
   as too large.
+- **Windows support** — extend PTY and git-worktree handling to Windows
+  (node-pty's ConPTY backend); plus nsis packaging in the release workflow. Moved
+  from Phase 2 — needs a Windows build/test environment.
