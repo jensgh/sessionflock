@@ -135,6 +135,21 @@ class Registry {
   }
 
   /**
+   * Full scrollback text of a terminal (for cross-session search). Reads the
+   * active buffer line-by-line; returns '' if the terminal isn't live.
+   */
+  getText(id: SessionId): string {
+    const live = this.terminals.get(id)
+    if (!live) return ''
+    const buf = live.term.buffer.active
+    const lines: string[] = []
+    for (let i = 0; i < buf.length; i++) {
+      lines.push(buf.getLine(i)?.translateToString(true) ?? '')
+    }
+    return lines.join('\n')
+  }
+
+  /**
    * Attach the terminal to a host element exactly once. WebGL rendering is
    * attempted but can fail on some Linux GPUs — fall back to the default
    * (canvas/DOM) renderer gracefully.

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type {
   PersistedSession,
   SessionSnapshot
@@ -10,6 +10,7 @@ import { createSession, scheduleNeedsInput } from './terminal/useTerminal'
 import { TopBar } from './components/TopBar'
 import { TabRail } from './components/TabRail'
 import { TerminalPane } from './components/TerminalPane'
+import { SearchOverlay } from './components/SearchOverlay'
 
 const PERSIST_DEBOUNCE_MS = 500
 
@@ -44,8 +45,23 @@ function AppShell(): JSX.Element {
   const { settings } = useSettings()
   // Keep the latest idle threshold available to the (long-lived) data handler
   // without re-subscribing it on every settings change.
+  const [searchOpen, setSearchOpen] = useState(false)
   const idleMsRef = useRef(settings?.needsInputIdleMs ?? 1500)
   const notifyRef = useRef(settings?.desktopNotifications ?? true)
+
+  // Ctrl/Cmd+Shift+F opens cross-session search. Capture-phase + stopPropagation
+  // so the chord doesn't also get forwarded into the focused terminal.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+        e.preventDefault()
+        e.stopPropagation()
+        setSearchOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey, { capture: true })
+    return () => window.removeEventListener('keydown', onKey, { capture: true })
+  }, [])
   useEffect(() => {
     if (settings) {
       idleMsRef.current = settings.needsInputIdleMs
@@ -233,11 +249,12 @@ function AppShell(): JSX.Element {
 
   return (
     <div className="app-root">
-      <TopBar />
+      <TopBar onOpenSearch={() => setSearchOpen(true)} />
       <div className="app-body">
         <TabRail />
         <TerminalPane />
       </div>
+      {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>
   )
 }

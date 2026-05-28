@@ -5,8 +5,8 @@ import { SettingsModal } from './SettingsModal'
 import { PromptModal } from './PromptModal'
 import { UsageMeter } from './UsageMeter'
 
-/** Top bar: New Session split-button (left) and Settings (right). */
-export function TopBar(): JSX.Element {
+/** Top bar: New Session split-button (left), usage meter + search + Settings (right). */
+export function TopBar({ onOpenSearch }: { onOpenSearch: () => void }): JSX.Element {
   const { settings } = useSettings()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -86,6 +86,16 @@ export function TopBar(): JSX.Element {
       <div className="top-bar-spacer" />
 
       <UsageMeter />
+
+      <button
+        type="button"
+        className="btn btn-icon search-btn"
+        onClick={onOpenSearch}
+        title="Search sessions (Ctrl/Cmd+Shift+F)"
+        aria-label="Search sessions"
+      >
+        <span aria-hidden="true">⌕</span>
+      </button>
 
       <button
         type="button"
