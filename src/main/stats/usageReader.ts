@@ -1,51 +1,16 @@
-// Reads per-session token usage from Claude Code's own transcript files.
+// Reads per-session token usage from Claude Code's own transcript file.
 //
-// Claude writes one JSONL transcript per session under
-// ~/.claude/projects/<encoded-cwd>/<session-uuid>.jsonl. Each assistant message
-// carries a `message.usage` block (input/output/cache token counts) and the
-// model. We locate the session's transcript by its working directory (which the
-// main process knows) and derive:
-//   - contextTokens: the LAST message's input + cache tokens = current context fill
-//   - totalOutputTokens: cumulative output tokens generated this session
-// We report the LIVE context fill for the session (how full the window is right
-// now), not cumulative totals. This is Claude-specific; other agents report none.
+// Each Claude session writes a JSONL transcript whose path it reports to our
+// hooks on stdin (session_id + transcript_path). The PTY manager captures that
+// payload into a per-session meta file ($SFLOCK_META_FILE); here we read the
+// transcript_path from it and parse THAT exact transcript — so a tab always
+// reflects its own session, never another session that happens to share the cwd.
+//
+// We report the LIVE context fill (how full the window is right now = the most
+// recent message's prompt-side tokens), not cumulative totals. Claude-specific;
+// other agents report no stats.
 
-import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
-
-const CLAUDE_PROJECTS = join(homedir(), '.claude', 'projects')
-
-// Claude derives the project-dir name from the cwd by replacing every '/' and
-// '.' with '-' (e.g. /home/u/repo.x -> -home-u-repo-x).
-function encodeCwd(cwd: string): string {
-  return cwd.replace(/[/.]/g, '-')
-}
-
-/** Newest top-level *.jsonl transcript in the cwd's project dir, or null. */
-export function findTranscript(cwd: string): string | null {
-  const dir = join(CLAUDE_PROJECTS, encodeCwd(cwd))
-  let entries: string[]
-  try {
-    entries = readdirSync(dir)
-  } catch {
-    return null // no project dir yet (session hasn't written a transcript)
-  }
-  let newest: { path: string; mtime: number } | null = null
-  for (const name of entries) {
-    if (!name.endsWith('.jsonl')) continue
-    const path = join(dir, name)
-    try {
-      const s = statSync(path)
-      if (s.isFile() && (!newest || s.mtimeMs > newest.mtime)) {
-        newest = { path, mtime: s.mtimeMs }
-      }
-    } catch {
-      // entry vanished between readdir and stat — ignore
-    }
-  }
-  return newest?.path ?? null
-}
+import { readFileSync } from 'node:fs'
 
 // Context-window size in tokens. The transcript model string ("claude-opus-4-8")
 // doesn't reveal whether the 1M-context beta is active, so we infer the tier from
@@ -60,14 +25,32 @@ export interface UsageStats {
   model: string | null
 }
 
-/** Parse the transcript for the given cwd. Returns null if none exists yet. */
-export function readUsage(cwd: string): UsageStats | null {
-  const path = findTranscript(cwd)
-  if (!path) return null
+/** Read the transcript_path a session's hooks captured into its meta file. */
+function transcriptPathFromMeta(metaFile: string): string | null {
+  let raw: string
+  try {
+    raw = readFileSync(metaFile, 'utf8')
+  } catch {
+    return null // no hook has fired yet — session hasn't reported its transcript
+  }
+  try {
+    const meta = JSON.parse(raw) as { transcript_path?: unknown }
+    return typeof meta.transcript_path === 'string' && meta.transcript_path.length > 0
+      ? meta.transcript_path
+      : null
+  } catch {
+    return null
+  }
+}
+
+/** Usage for the session whose hooks wrote `metaFile`. Null until one has fired. */
+export function readUsage(metaFile: string): UsageStats | null {
+  const transcript = transcriptPathFromMeta(metaFile)
+  if (!transcript) return null
 
   let text: string
   try {
-    text = readFileSync(path, 'utf8')
+    text = readFileSync(transcript, 'utf8')
   } catch {
     return null
   }

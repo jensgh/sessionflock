@@ -51,8 +51,8 @@ type SendFn = (channel: string, payload: unknown) => void
 
 interface Session {
   pty: IPty
-  /** Resolved working directory the agent runs in (used to find its transcript). */
-  cwd: string
+  /** Per-session meta file whose JSON carries this session's transcript_path. */
+  metaFile: string
   /** Pending output chunks awaiting the next flush. */
   buffer: string[]
   /** Active flush timer, or null when idle. */
@@ -116,8 +116,14 @@ export class PtyManager {
     } catch {
       // Non-fatal: without the file, hook attention signals are simply absent.
     }
+    // Per-session meta file: a SessionStart/Stop/Notification hook writes its
+    // stdin JSON (which includes this session's transcript_path) here, so we can
+    // read THIS session's transcript for token stats instead of guessing by cwd.
+    const metaFile = join(EVENTS_DIR, `${req.id}.meta.json`)
+
     const env = agent.buildEnv()
     env.SFLOCK_EVENT_FILE = eventFile
+    env.SFLOCK_META_FILE = metaFile
 
     // Optionally isolate the session in a fresh git worktree (falls back to the
     // requested folder if it isn't a repo or worktree creation fails).
@@ -142,7 +148,7 @@ export class PtyManager {
 
     const session: Session = {
       pty: child,
-      cwd: resolved.cwd,
+      metaFile,
       buffer: [],
       timer: null,
       eventFile,
@@ -269,7 +275,7 @@ export class PtyManager {
   /** Read each session's transcript and push changed token-usage stats. */
   private pollStats(): void {
     for (const [id, session] of this.sessions) {
-      const usage = readUsage(session.cwd)
+      const usage = readUsage(session.metaFile)
       if (!usage) continue
       const payload = {
         id,
@@ -329,6 +335,11 @@ export class PtyManager {
     }
     try {
       unlinkSync(session.eventFile)
+    } catch {
+      /* ignore */
+    }
+    try {
+      unlinkSync(session.metaFile)
     } catch {
       /* ignore */
     }

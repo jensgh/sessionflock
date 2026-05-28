@@ -113,30 +113,46 @@ function buildEnv(): NodeJS.ProcessEnv {
 // MERGES with (does not replace) the user's own settings and never touches their
 // global ~/.claude/settings.json — scoped to the process we spawn.
 //
-// The hooks let the app know when a backgrounded session is waiting for the user:
-//   - `Stop` (turn ended) and `Notification` each APPEND a marker line to the
-//     per-session event file ($SFLOCK_EVENT_FILE), which the main process watches.
+// The hooks do two jobs:
+//   - Attention: `Stop` (turn ended) and `Notification` APPEND a marker line to
+//     the per-session event file ($SFLOCK_EVENT_FILE), which the main process
+//     watches to light the "needs you" dot.
+//   - Stats: every hook gets the session's JSON payload (incl. transcript_path)
+//     on stdin; we capture it to $SFLOCK_META_FILE so the host can read THIS
+//     session's transcript for token usage. `SessionStart` captures it up front.
 // We deliberately do NOT write to the terminal: Claude runs hooks without a
 // controlling terminal, so `>/dev/tty` fails and a failing hook can block the
-// operation. Appending to a file always succeeds; `|| true` guarantees exit 0.
-const appendCmd = (kind: string): string =>
-  `printf '${kind}\\n' >> "$SFLOCK_EVENT_FILE" 2>/dev/null || true`
+// operation. Writing to a file always succeeds; `|| true` guarantees exit 0.
 
-const hookEntry = (kind: string): { hooks: Array<{ type: string; command: string }> } => ({
-  hooks: [{ type: 'command', command: appendCmd(kind) }]
+// Capture the hook's stdin JSON (transcript_path + session_id) for the host.
+const captureMeta = `cat > "$SFLOCK_META_FILE" 2>/dev/null`
+const appendMarker = (kind: string): string =>
+  `printf '${kind}\\n' >> "$SFLOCK_EVENT_FILE" 2>/dev/null`
+
+const captureOnly = {
+  hooks: [{ type: 'command', command: `${captureMeta} || true` }]
+}
+const captureAndMark = (
+  kind: string
+): { hooks: Array<{ type: string; command: string }> } => ({
+  hooks: [{ type: 'command', command: `( ${captureMeta}; ${appendMarker(kind)} ) 2>/dev/null || true` }]
 })
 
 const hooks: Record<string, unknown> = {
-  Stop: [hookEntry('done')],
-  Notification: [hookEntry('ask')]
+  SessionStart: [captureOnly],
+  Stop: [captureAndMark('done')],
+  Notification: [captureAndMark('ask')]
 }
 
 // Diagnostic probes (SFLOCK_DEBUG=1): emit markers on extra lifecycle events so the
 // main-process log can show which hooks actually fire on a given Claude version.
 if (process.env.SFLOCK_DEBUG === '1') {
-  hooks.UserPromptSubmit = [hookEntry('prompt')]
-  hooks.PreToolUse = [hookEntry('pretool')]
-  hooks.SubagentStop = [hookEntry('subdone')]
+  const probe = (kind: string): { hooks: Array<{ type: string; command: string }> } => ({
+    hooks: [{ type: 'command', command: `${appendMarker(kind)} || true` }]
+  })
+  hooks.UserPromptSubmit = [probe('prompt')]
+  hooks.PreToolUse = [probe('pretool')]
+  hooks.SubagentStop = [probe('subdone')]
 }
 
 const SESSION_SETTINGS = JSON.stringify({
