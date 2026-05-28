@@ -29,17 +29,18 @@
 }
 
 :root[data-theme='light'] {
-  /* "Warm paper": layered off-white surfaces (rail < app < elevated) with a
-     warm grey ink, so panes read as distinct depths instead of a flat sheet. */
-  --bg: #faf8f5;
-  --bg-elevated: #fffdfa;
-  --bg-rail: #f0ece5;
-  --bg-hover: #e9e3da;
-  --bg-active: #ded6ca;
-  --fg: #2b2722;
-  --fg-muted: #6b6258;
-  --fg-dim: #9a9086;
-  --border: #e0d8cc;
+  /* "Warm paper": muted, layered greige surfaces (clearly off-white, not stark)
+     with warm grey ink and soft low-contrast borders, so the UI reads smooth and
+     calm rather than a bright white sheet. */
+  --bg: #efece4;
+  --bg-elevated: #f6f2ea;
+  --bg-rail: #e6e0d5;
+  --bg-hover: #ddd6ca;
+  --bg-active: #d1c9ba;
+  --fg: #33302a;
+  --fg-muted: #6c6458;
+  --fg-dim: #978f81;
+  --border: #ddd5c7;
   --accent: #0066b8;
   --accent-hover: #0078d4;
   --accent-fg: #ffffff;
