@@ -26,7 +26,7 @@ export interface UsageStats {
 }
 
 /** Read the transcript_path a session's hooks captured into its meta file. */
-function transcriptPathFromMeta(metaFile: string): string | null {
+export function transcriptPathFromMeta(metaFile: string): string | null {
   let raw: string
   try {
     raw = readFileSync(metaFile, 'utf8')

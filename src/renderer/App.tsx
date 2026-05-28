@@ -11,7 +11,7 @@ import { TopBar } from './components/TopBar'
 import { TabRail } from './components/TabRail'
 import { TerminalPane } from './components/TerminalPane'
 import { SearchOverlay } from './components/SearchOverlay'
-import { MdPanel } from './components/MdPanel'
+import { SessionPanel, type PanelKind } from './components/SessionPanel'
 
 const PERSIST_DEBOUNCE_MS = 500
 
@@ -47,7 +47,7 @@ function AppShell(): JSX.Element {
   // Keep the latest idle threshold available to the (long-lived) data handler
   // without re-subscribing it on every settings change.
   const [searchOpen, setSearchOpen] = useState(false)
-  const [mdPanelOpen, setMdPanelOpen] = useState(false)
+  const [rightPanel, setRightPanel] = useState<PanelKind | 'none'>('none')
   const idleMsRef = useRef(settings?.needsInputIdleMs ?? 1500)
   const notifyRef = useRef(settings?.desktopNotifications ?? true)
   const autoNameRef = useRef(settings?.autoNameSessions ?? true)
@@ -273,13 +273,15 @@ function AppShell(): JSX.Element {
     <div className="app-root">
       <TopBar
         onOpenSearch={() => setSearchOpen(true)}
-        mdPanelOpen={mdPanelOpen}
-        onToggleMdPanel={() => setMdPanelOpen((o) => !o)}
+        rightPanel={rightPanel}
+        onTogglePanel={(kind) => setRightPanel((cur) => (cur === kind ? 'none' : kind))}
       />
       <div className="app-body">
         <TabRail />
         <TerminalPane />
-        {mdPanelOpen && <MdPanel onClose={() => setMdPanelOpen(false)} />}
+        {rightPanel !== 'none' && (
+          <SessionPanel kind={rightPanel} onClose={() => setRightPanel('none')} />
+        )}
       </div>
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </div>

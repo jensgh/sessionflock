@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import {
   IPC,
   type AccountUsage,
-  type MdFile,
+  type SessionResources,
   type AppSettings,
   type PtyCreateRequest,
   type PtyCreateResponse,
@@ -103,8 +103,8 @@ const api: RendererApi = {
   getAccountUsage: (): Promise<AccountUsage | null> =>
     ipcRenderer.invoke(IPC.USAGE_ACCOUNT),
 
-  listMarkdownFiles: (dir: string): Promise<MdFile[]> =>
-    ipcRenderer.invoke(IPC.MD_LIST, dir),
+  getSessionResources: (id: string): Promise<SessionResources> =>
+    ipcRenderer.invoke(IPC.SESSION_RESOURCES, id),
 
   openPath: (absPath: string): void => {
     ipcRenderer.send(IPC.OPEN_PATH, absPath)

@@ -18,7 +18,7 @@ import { pickFolder } from '../dialogs.js'
 import { getSettings, setSettings } from '../settings/settingsStore.js'
 import { loadSnapshot, saveSnapshot } from '../persistence/sessionStore.js'
 import { getAccountUsage } from '../stats/accountUsage.js'
-import { listMarkdown } from '../mdFiles.js'
+import { readSessionResources } from '../stats/sessionResources.js'
 import { deriveSessionName } from '../autoName.js'
 import { existsSync } from 'node:fs'
 
@@ -70,10 +70,13 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
   // --- Account usage (claude.ai 5h/7d rate-limit windows) --------------------
   ipcMain.handle(IPC.USAGE_ACCOUNT, () => getAccountUsage())
 
-  // --- Markdown files panel --------------------------------------------------
-  ipcMain.handle(IPC.MD_LIST, (_e, dir: string) =>
-    typeof dir === 'string' && existsSync(dir) ? listMarkdown(dir) : []
-  )
+  // --- Per-session resources (md files read, MCP servers, skills used) -------
+  ipcMain.handle(IPC.SESSION_RESOURCES, (_e, id: string) => {
+    const metaFile = typeof id === 'string' ? ptyManager.getMetaFile(id) : null
+    return metaFile
+      ? readSessionResources(metaFile)
+      : { mdFiles: [], mcpServers: [], skills: [] }
+  })
 
   // Open a local file/folder in the OS default app (e.g. a markdown viewer).
   ipcMain.on(IPC.OPEN_PATH, (_e, p: string) => {

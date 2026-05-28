@@ -17,7 +17,7 @@ export const IPC = {
   SESSIONS_SAVE: 'sessions:save',
   CLIPBOARD_READ: 'clipboard:read',
   USAGE_ACCOUNT: 'usage:account',
-  MD_LIST: 'md:list',
+  SESSION_RESOURCES: 'session:resources',
   AUTONAME_DERIVE: 'autoname:derive',
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
@@ -95,12 +95,20 @@ export interface PtyAttentionPayload {
   kind: 'ask' | 'done'
 }
 
-/** A markdown file found under a session's folder. */
+/** A markdown file a session read/edited (path relative to its cwd + absolute). */
 export interface MdFile {
-  /** Path relative to the session folder, for display. */
   rel: string
-  /** Absolute path, for opening. */
   abs: string
+}
+
+/** What a session has actually used so far, derived from its transcript. */
+export interface SessionResources {
+  /** Markdown files the session read or edited. */
+  mdFiles: MdFile[]
+  /** MCP servers whose tools the session invoked (display names). */
+  mcpServers: string[]
+  /** Skills the session invoked. */
+  skills: string[]
 }
 
 /** claude.ai subscription usage (rate-limit windows), from the OAuth usage API. */
@@ -237,8 +245,8 @@ export interface RendererApi {
   focusWindow(): void
   /** claude.ai subscription usage (5h/7d windows); null if unavailable. */
   getAccountUsage(): Promise<AccountUsage | null>
-  /** List markdown files under a session folder (relative + absolute paths). */
-  listMarkdownFiles(dir: string): Promise<MdFile[]>
+  /** What a session has used so far (md files read, MCP servers, skills). */
+  getSessionResources(id: SessionId): Promise<SessionResources>
   /** Open a local file/folder in the OS default application. */
   openPath(absPath: string): void
 }

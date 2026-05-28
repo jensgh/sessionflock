@@ -189,6 +189,11 @@ export class PtyManager {
     if (session) session.pty.write(data)
   }
 
+  /** The session's hook meta file (carries its transcript_path), or null. */
+  getMetaFile(id: SessionId): string | null {
+    return this.sessions.get(id)?.metaFile ?? null
+  }
+
   resize(id: SessionId, cols: number, rows: number): void {
     const session = this.sessions.get(id)
     if (!session) return
