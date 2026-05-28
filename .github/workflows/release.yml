@@ -38,6 +38,7 @@ jobs:
             release/**/*.exe
             release/**/*.blockmap
             release/**/latest*.yml
+            !release/**/win-unpacked/**
 
   publish:
     needs: build
@@ -54,9 +55,13 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version="${GITHUB_REF_NAME#v}"
-          files=$(find dist -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' -o -name '*.exe' -o -name '*.blockmap' -o -name 'latest*.yml' \))
-          echo "Attaching:"; echo "$files"
+          # NUL-delimited into an array so filenames with spaces survive; skip the
+          # unpacked app tree (only the installers + update metadata get attached).
+          mapfile -d '' files < <(find dist -type f -not -path '*/win-unpacked/*' \
+            \( -name '*.AppImage' -o -name '*.deb' -o -name '*.dmg' -o -name '*.zip' \
+               -o -name '*.exe' -o -name '*.blockmap' -o -name 'latest*.yml' \) -print0)
+          printf 'Attaching: %s\n' "${files[@]}"
           gh release create "$GITHUB_REF_NAME" \
             --title "Sessionflock $version" \
             --notes-file RELEASE_NOTES.md \
-            $files
+            "${files[@]}"

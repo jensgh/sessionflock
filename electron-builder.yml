@@ -42,6 +42,8 @@ win:
   # build/icon.png. node-pty uses ConPTY on Windows 10+ (rebuilt via npmRebuild).
   target:
     - nsis
+  # Space-free name (the default "ProductName Setup x.y.z.exe" breaks shell globbing).
+  artifactName: ${productName}-${version}-setup.${ext}
 
 publish:
   provider: github
