@@ -44,8 +44,9 @@ Linux (Ubuntu) and macOS.
   triggers it). If the first prompt links to a task tracker (e.g. an Asana URL)
   reachable via an MCP server, read the task and name the session/branch from it.
 - ✅ **Show agent usage stats** — current-session usage in the top bar (agent logo +
-  context %), click to expand model + used/window tokens + fill bar
-  (spec `2026-05-28-1926-topbar-usage-stats`). Account-wide usage still possible later.
+  context %), click to expand model + used/window tokens + fill bar, plus the
+  claude.ai **plan usage** (5-hour + 7-day rate-limit windows) fetched from the OAuth
+  usage endpoint (spec `2026-05-28-1926-topbar-usage-stats`).
 - ✅ **Per-session token usage & context window** — under each session in the tab rail,
   show how many tokens that session has used and its context-window size/fill.
   (spec `2026-05-28-1849`; read from Claude transcripts. The top-bar usage stat from

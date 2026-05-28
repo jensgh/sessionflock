@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import {
   IPC,
+  type AccountUsage,
   type AppSettings,
   type PtyCreateRequest,
   type PtyCreateResponse,
@@ -85,7 +86,10 @@ const api: RendererApi = {
 
   focusWindow: (): void => {
     ipcRenderer.send(IPC.WINDOW_FOCUS)
-  }
+  },
+
+  getAccountUsage: (): Promise<AccountUsage | null> =>
+    ipcRenderer.invoke(IPC.USAGE_ACCOUNT)
 }
 
 contextBridge.exposeInMainWorld('api', api)

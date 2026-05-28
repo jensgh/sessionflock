@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { agentLabel } from '@shared/agents'
+import type { AccountUsage } from '@shared/ipc-types'
 import { useSessionStore } from '../store/sessionStore'
 import { agentIcon } from '../agents/icons'
 import { formatTokens } from '../format'
@@ -13,7 +14,21 @@ import { formatTokens } from '../format'
 export function UsageMeter(): JSX.Element | null {
   const meta = useSessionStore((s) => (s.activeId ? s.sessions[s.activeId] : undefined))
   const [open, setOpen] = useState(false)
+  const [account, setAccount] = useState<AccountUsage | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Pull the claude.ai subscription usage (5h/7d windows) when the panel opens.
+  // Main caches it for 5 min, so reopening is cheap.
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    void window.api.getAccountUsage().then((u) => {
+      if (!cancelled) setAccount(u)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [open])
 
   // Close the popover on outside-click / Escape (mirrors the modal pattern).
   useEffect(() => {
@@ -82,6 +97,26 @@ export function UsageMeter(): JSX.Element | null {
           </div>
 
           <div className="usage-popover-foot">{pct}% of context window used</div>
+
+          {account && (
+            <div className="usage-plan">
+              <div className="usage-plan-title">Claude plan usage</div>
+              <div className="usage-popover-row">
+                <span>5-hour</span>
+                <span>{account.fiveHourPct}%</span>
+              </div>
+              <div className="usage-bar" aria-hidden="true">
+                <div className="usage-bar-fill" style={{ width: `${account.fiveHourPct}%` }} />
+              </div>
+              <div className="usage-popover-row">
+                <span>7-day</span>
+                <span>{account.sevenDayPct}%</span>
+              </div>
+              <div className="usage-bar" aria-hidden="true">
+                <div className="usage-bar-fill" style={{ width: `${account.sevenDayPct}%` }} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

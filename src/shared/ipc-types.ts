@@ -16,6 +16,7 @@ export const IPC = {
   SESSIONS_LOAD: 'sessions:load',
   SESSIONS_SAVE: 'sessions:save',
   CLIPBOARD_READ: 'clipboard:read',
+  USAGE_ACCOUNT: 'usage:account',
   // renderer -> main (one-way send; high-frequency keystrokes)
   PTY_WRITE: 'pty:write',
   CLIPBOARD_WRITE: 'clipboard:write',
@@ -88,6 +89,14 @@ export interface PtyAttentionPayload {
   id: SessionId
   /** 'done' = turn finished (green), 'ask' = waiting for input/permission (yellow). */
   kind: 'ask' | 'done'
+}
+
+/** claude.ai subscription usage (rate-limit windows), from the OAuth usage API. */
+export interface AccountUsage {
+  /** 5-hour session window utilization, 0–100. */
+  fiveHourPct: number
+  /** 7-day weekly window utilization, 0–100. */
+  sevenDayPct: number
 }
 
 /** Per-session token usage, read from the agent's transcript (Claude only). */
@@ -199,4 +208,6 @@ export interface RendererApi {
   openExternal(url: string): void
   /** Bring the app window to the foreground (e.g. from a notification click). */
   focusWindow(): void
+  /** claude.ai subscription usage (5h/7d windows); null if unavailable. */
+  getAccountUsage(): Promise<AccountUsage | null>
 }
