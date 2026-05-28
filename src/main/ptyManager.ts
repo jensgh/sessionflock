@@ -280,9 +280,10 @@ export class PtyManager {
       const payload = {
         id,
         contextTokens: usage.contextTokens,
-        contextWindow: usage.contextWindow
+        contextWindow: usage.contextWindow,
+        model: usage.model
       }
-      const sig = `${payload.contextTokens}/${payload.contextWindow}`
+      const sig = `${payload.contextTokens}/${payload.contextWindow}/${payload.model}`
       if (sig === session.lastStats) continue // unchanged — skip the IPC
       session.lastStats = sig
       this.send(IPC.PTY_STATS, payload)

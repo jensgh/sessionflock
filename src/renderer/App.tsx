@@ -52,8 +52,8 @@ function AppShell(): JSX.Element {
     })
 
     // Per-session token usage, polled from the agent transcript in main.
-    const offStats = window.api.onPtyStats(({ id, contextTokens, contextWindow }) => {
-      useSessionStore.getState().setStats(id, { contextTokens, contextWindow })
+    const offStats = window.api.onPtyStats(({ id, contextTokens, contextWindow, model }) => {
+      useSessionStore.getState().setStats(id, { contextTokens, contextWindow, model })
     })
 
     const offExit = window.api.onPtyExit(({ id, exitCode, signal }) => {

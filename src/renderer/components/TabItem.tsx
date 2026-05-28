@@ -3,17 +3,11 @@ import type { SessionId } from '@shared/ipc-types'
 import { agentLabel } from '@shared/agents'
 import { useSessionStore } from '../store/sessionStore'
 import { agentIcon } from '../agents/icons'
+import { formatTokens } from '../format'
 
 interface TabItemProps {
   id: SessionId
   onRequestClose: (id: SessionId) => void
-}
-
-/** Compact token count: 1.2k, 165k, 1.4M. */
-function formatTokens(n: number): string {
-  if (n < 1000) return String(n)
-  if (n < 1_000_000) return `${Math.round(n / 1000)}k`
-  return `${(n / 1_000_000).toFixed(1)}M`
 }
 
 /**

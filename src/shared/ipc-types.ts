@@ -96,6 +96,8 @@ export interface PtyStatsPayload {
   contextTokens: number
   /** Model context-window size in tokens. */
   contextWindow: number
+  /** Model id reported by the transcript, or null if not yet known. */
+  model: string | null
 }
 
 // ---- Settings ---------------------------------------------------------------

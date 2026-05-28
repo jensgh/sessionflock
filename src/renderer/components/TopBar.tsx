@@ -3,6 +3,7 @@ import { useSettings } from '../settings/SettingsContext'
 import { createSession } from '../terminal/useTerminal'
 import { SettingsModal } from './SettingsModal'
 import { PromptModal } from './PromptModal'
+import { UsageMeter } from './UsageMeter'
 
 /** Top bar: New Session split-button (left) and Settings (right). */
 export function TopBar(): JSX.Element {
@@ -83,6 +84,8 @@ export function TopBar(): JSX.Element {
       </div>
 
       <div className="top-bar-spacer" />
+
+      <UsageMeter />
 
       <button
         type="button"
