@@ -20,6 +20,7 @@ export const IPC = {
   PTY_WRITE: 'pty:write',
   CLIPBOARD_WRITE: 'clipboard:write',
   OPEN_EXTERNAL: 'shell:open',
+  WINDOW_FOCUS: 'window:focus',
   // main -> renderer (webContents.send)
   PTY_DATA: 'pty:data',
   PTY_EXIT: 'pty:exit',
@@ -125,6 +126,8 @@ export interface AppSettings {
   worktreeMode: WorktreeMode
   /** Prompt for a task name when starting a session (names the tab + branch). */
   askOnNewSession: boolean
+  /** OS notification when a backgrounded session needs you and the app is unfocused. */
+  desktopNotifications: boolean
   /** Explicit path to the `claude` binary; null = auto-detect. */
   claudePath: string | null
 }
@@ -139,6 +142,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, 'defaultHomeFolder'> = {
   defaultAgent: 'claude',
   worktreeMode: 'never',
   askOnNewSession: false,
+  desktopNotifications: true,
   claudePath: null
 }
 
@@ -193,4 +197,6 @@ export interface RendererApi {
   readClipboard(): Promise<string>
   /** Open an http/https URL in the user's default browser (validated in main). */
   openExternal(url: string): void
+  /** Bring the app window to the foreground (e.g. from a notification click). */
+  focusWindow(): void
 }

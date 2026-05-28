@@ -15,6 +15,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
   const [defaultAgent, setDefaultAgent] = useState('claude')
   const [worktreeMode, setWorktreeMode] = useState<WorktreeMode>('never')
   const [askOnNewSession, setAskOnNewSession] = useState(false)
+  const [desktopNotifications, setDesktopNotifications] = useState(true)
   const [needsInputIdleMs, setNeedsInputIdleMs] = useState(1500)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,6 +28,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
     setDefaultAgent(settings.defaultAgent)
     setWorktreeMode(settings.worktreeMode)
     setAskOnNewSession(settings.askOnNewSession)
+    setDesktopNotifications(settings.desktopNotifications)
     setNeedsInputIdleMs(settings.needsInputIdleMs)
   }, [settings])
 
@@ -62,6 +64,7 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
         defaultAgent,
         worktreeMode,
         askOnNewSession,
+        desktopNotifications,
         needsInputIdleMs: idle
       })
       onClose()
@@ -167,6 +170,22 @@ export function SettingsModal({ onClose }: { onClose: () => void }): JSX.Element
             Prompt for a short task name when starting a session; it names the tab
             and (with worktree isolation on) the git branch. Off = start
             immediately.
+          </span>
+        </label>
+
+        <label className="field">
+          <span className="field-label">
+            <input
+              type="checkbox"
+              checked={desktopNotifications}
+              onChange={(e) => setDesktopNotifications(e.target.checked)}
+            />{' '}
+            Desktop notifications
+          </span>
+          <span className="field-hint">
+            Show an OS notification when a background session needs you or finishes,
+            but only while the app window isn’t focused. Click it to jump to that
+            session.
           </span>
         </label>
 

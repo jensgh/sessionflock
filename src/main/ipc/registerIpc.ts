@@ -79,4 +79,11 @@ export function registerIpc(win: BrowserWindow, ptyManager: PtyManager): void {
       void shell.openExternal(parsed.toString())
     }
   })
+
+  // --- Window focus (e.g. from a desktop-notification click) -----------------
+  ipcMain.on(IPC.WINDOW_FOCUS, () => {
+    if (win.isMinimized()) win.restore()
+    win.show()
+    win.focus()
+  })
 }

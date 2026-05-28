@@ -13,6 +13,25 @@ import { TerminalPane } from './components/TerminalPane'
 
 const PERSIST_DEBOUNCE_MS = 500
 
+/**
+ * Fire an OS notification for a backgrounded session that wants attention.
+ * Clicking it brings the window forward and focuses that session. Best-effort:
+ * silently does nothing if the platform/Notification API is unavailable.
+ */
+function notifySession(id: string, name: string, kind: 'ask' | 'done'): void {
+  if (typeof Notification === 'undefined') return
+  const body = kind === 'done' ? 'Finished its turn.' : 'Needs your input.'
+  try {
+    const n = new Notification(name || 'Session', { body, tag: id })
+    n.onclick = () => {
+      window.api.focusWindow()
+      useSessionStore.getState().setActive(id)
+    }
+  } catch {
+    // Some platforms throw without notification permission — ignore.
+  }
+}
+
 export function App(): JSX.Element {
   return (
     <SettingsProvider>
@@ -26,8 +45,12 @@ function AppShell(): JSX.Element {
   // Keep the latest idle threshold available to the (long-lived) data handler
   // without re-subscribing it on every settings change.
   const idleMsRef = useRef(settings?.needsInputIdleMs ?? 1500)
+  const notifyRef = useRef(settings?.desktopNotifications ?? true)
   useEffect(() => {
-    if (settings) idleMsRef.current = settings.needsInputIdleMs
+    if (settings) {
+      idleMsRef.current = settings.needsInputIdleMs
+      notifyRef.current = settings.desktopNotifications
+    }
   }, [settings])
 
   // ---- Global pty data / exit handlers (registered exactly once) ----------
@@ -43,12 +66,17 @@ function AppShell(): JSX.Element {
     // Attention from Claude hooks (via the main-process event watcher). Both
     // 'done' (turn ended) and 'ask' (notification) collapse to a single
     // "needs you" state. Never flag the tab you're watching.
-    const offAttention = window.api.onPtyAttention(({ id }) => {
+    const offAttention = window.api.onPtyAttention(({ id, kind }) => {
       const state = useSessionStore.getState()
       const meta = state.sessions[id]
       if (!meta || meta.status !== 'running') return
       if (state.activeId === id) return
       state.setAttention(id, 'needs')
+      // Desktop notification only when the app isn't focused — when it is, the
+      // in-app tab dot is enough and an OS popup would be noise.
+      if (notifyRef.current && !document.hasFocus()) {
+        notifySession(id, meta.name, kind)
+      }
     })
 
     // Per-session token usage, polled from the agent transcript in main.

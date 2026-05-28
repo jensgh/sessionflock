@@ -81,6 +81,10 @@ const api: RendererApi = {
 
   openExternal: (url: string): void => {
     ipcRenderer.send(IPC.OPEN_EXTERNAL, url)
+  },
+
+  focusWindow: (): void => {
+    ipcRenderer.send(IPC.WINDOW_FOCUS)
   }
 }
 
