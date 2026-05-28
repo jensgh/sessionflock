@@ -91,10 +91,6 @@ export function TopBar({ onOpenSearch, rightPanel, onTogglePanel }: TopBarProps)
         </button>
       </div>
 
-      <UsageMeter />
-
-      <div className="top-bar-spacer" />
-
       <button
         type="button"
         className="btn btn-icon search-btn"
@@ -104,6 +100,10 @@ export function TopBar({ onOpenSearch, rightPanel, onTogglePanel }: TopBarProps)
       >
         <span aria-hidden="true">⌕</span>
       </button>
+
+      <UsageMeter />
+
+      <div className="top-bar-spacer" />
 
       <button
         type="button"
